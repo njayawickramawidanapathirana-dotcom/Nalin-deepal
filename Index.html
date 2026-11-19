@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>විදේශ ගත ශ්‍රමික තොරතුරු පද්ධතිය - වැලිපිටිය</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <style>
+        body { font-family: 'Iskoola Pota', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; direction: ltr; }
+        .container { max-width: 1400px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2, h3, h4 { color: #1a365d; margin-top: 0; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: #f8fafc; border-left: 5px solid #3182ce; padding: 15px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stat-card h4 { margin: 0 0 10px 0; color: #4a5568; font-size: 14px; }
+        .stat-card p { margin: 0; font-size: 24px; font-weight: bold; color: #2d3748; }
+        .form-section { background: #f7fafc; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568; }
+        .form-control { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #cbd5e0; border-radius: 4px; }
+        button { background: #3182ce; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 15px; }
+        button:hover { background: #2b6cb0; }
+        .child-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; padding: 10px; background: #fff; border: 1px solid #cbd5e0; border-radius: 6px; align-items: center; }
+        .btn-danger { background: #e53e3e; padding: 8px 12px; font-size: 14px; }
+        .btn-danger:hover { background: #c53030; }
+        .btn-secondary { background: #4a5568; }
+        .btn-secondary:hover { background: #2d3748; }
+        .btn-print { background: #2f855a; }
+        .btn-print:hover { background: #276749; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { border: 1px solid #cbd5e0; padding: 8px; text-align: left; font-size: 13px; white-space: nowrap; }
+        th { background: #edf2f7; color: #1a365d; }
+        .filter-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 14px; }
+
+        /* Print Preview Box */
+        .report-preview-box {
+            background: #ffffff;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 12px 0 16px 0;
+        }
+        .summary-box {
+            background: #edf2f7;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #2b6cb0;
+        }
+        .summary-box span { display: block; font-size: 13px; color: #4a5568; }
+        .summary-box strong { font-size: 22px; color: #1a202c; }
+
+        /* මුද්‍රණය කරන විට (Print) පාලන බොත්තම් සහ පෝරම සැඟවීම */
+        @media print {
+            body { background: #fff; padding: 0; }
+            .container { box-shadow: none; max-width: 100%; padding: 0; }
+            .no-print { display: none !important; }
+            .report-preview-box { border: none; padding: 0; }
+            th, td { white-space: normal; font-size: 11px; padding: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>විදේශ ගත ශ්‍රමික තොරතුරු පද්ධතිය - වැලිපිටිය ප්‍රාදේශීය ලේකම් කාර්යාලය</h2>
+
+    <!-- ඩෑෂ්බෝඩ් සංඛ්‍යා ලේඛන -->
+    <div class="stats-grid no-print">
+        <div class="stat-card">
+            <h4>මුළු විදේශ ගත ශ්‍රමිකයින්</h4>
+            <p id="total-workers">0</p>
+        </div>
+        <div class="stat-card" style="border-left-color: #ed64a6;">
+            <h4>කාන්තා ශ්‍රමිකයින් (F)</h4>
+            <p id="female-count">0</p>
+        </div>
+        <div class="stat-card" style="border-left-color: #4299e1;">
+            <h4>පිරිමි ශ්‍රමිකයින් (M)</h4>
+            <p id="male-count">0</p>
+        </div>
+        <div class="stat-card" style="border-left-color: #ecc94b;">
+            <h4>විශේෂ අවධානම් පවුල් / දරුවන්</h4>
+            <p id="risk-count">0</p>
+        </div>
+    </div>
+
+    <!-- නව වාර්තාව: නිශ්චිත කාලසීමාවක් තුළ කාන්තා / පුරුෂ / සමස්ත විදේශගත වාර්තාව (Preview & Print) -->
+    <div class="form-section" id="periodGenderReportSection">
+        <h3 class="no-print">කාලසීමාව අනුව විදේශගත වූ කාන්තා, පුරුෂ සහ සමස්ත වාර්තාව</h3>
+
+        <div class="filter-bar no-print">
+            <div>
+                <label for="periodFromDate">ආරම්භක දිනය (From):</label>
+                <input type="date" id="periodFromDate" class="form-control">
+            </div>
+            <div>
+                <label for="periodToDate">අවසාන දිනය (To):</label>
+                <input type="date" id="periodToDate" class="form-control">
+            </div>
+            <div>
+                <label for="periodGenderFilter">ස්ත්‍රි / පුරුෂ පෙරහන:</label>
+                <select id="periodGenderFilter" class="form-control">
+                    <option value="ALL">සියල්ල (සමස්තය)</option>
+                    <option value="F">කාන්තා පමණි (F)</option>
+                    <option value="M">පිරිමි පමණි (M)</option>
+                </select>
+            </div>
+            <button type="button" onclick="generatePeriodGenderReport()">Preview වාර්තාව</button>
+            <button type="button" class="btn-secondary" onclick="resetPeriodGenderReport()">Reset</button>
+            <button type="button" class="btn-print" onclick="printActiveReport('periodGenderPreview')">මුද්‍රණය කරන්න (Print)</button>
+        </div>
+
+        <div id="periodGenderPreview" class="report-preview-box">
+            <h4 id="periodReportTitle">කාලසීමාව අනුව විදේශගත වූ පිරිසගේ වාර්තාව (සියලු දින)</h4>
+            <div class="summary-strip">
+                <div class="summary-box" style="border-left-color: #ed64a6;">
+                    <span>කාන්තාවන් ප්‍රමාණය (F)</span>
+                    <strong id="periodFemaleCount">0</strong>
+                </div>
+                <div class="summary-box" style="border-left-color: #3182ce;">
+                    <span>පුරුෂයන් ප්‍රමාණය (M)</span>
+                    <strong id="periodMaleCount">0</strong>
+                </div>
+                <div class="summary-box" style="border-left-color: #2f855a;">
+                    <span>සමස්ත විදේශගත ප්‍රමාණය (Total)</span>
+                    <strong id="periodTotalCount">0</strong>
+                </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>නම</th>
+                            <th>ස්ත්‍රි / පුරුෂ (F/M)</th>
+                            <th>ජාතික හැඳුනුම්පත් අංකය</th>
+                            <th>ගමන් බලපත්‍ර අංකය</th>
+                            <th>රට</th>
+                            <th>පිටත්වීමේ / ලියාපදිංචි දිනය</th>
+                        </tr>
+                    </thead>
+                    <tbody id="periodGenderReportBody">
+                        <tr><td colspan="7" style="text-align:center;">දත්ත පූරණය වෙමින් පවතී...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- නව ඇතුළත් කිරීමේ පෝරමය -->
+    <div class="form-section no-print">
+        <h3>නව ශ්‍රමිකයෙකු ඇතුළත් කිරීම</h3>
+        <form id="workerForm">
+            <div class="form-group">
+                <label for="name">සම්පූර්ණ නම:</label>
+                <input type="text" id="name" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="gender">ලිංගභේදය (F / M):</label>
+                <select id="gender" class="form-control" required>
+                    <option value="">තෝරන්න...</option>
+                    <option value="F">F (කාන්තා)</option>
+                    <option value="M">M (පිරිමි)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="nic">ජාතික හැඳුනුම්පත් අංකය (NIC):</label>
+                <input type="text" id="nic" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="passport">ගමන් බලපත්‍ර අංකය (Passport):</label>
+                <input type="text" id="passport" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="country">රට (Country):</label>
+                <input type="text" id="country" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="departureDate">පිටත්වීමේ / ලියාපදිංචි දිනය:</label>
+                <input type="date" id="departureDate" class="form-control">
+            </div>
+
+            <!-- දරුවන්ගේ තොරතුරු වෙන වෙනම ඇතුළත් කිරීමේ කොටස -->
+            <div class="form-section" style="background: #edf2f7;">
+                <h3>දරුවන්ගේ තොරතුරු</h3>
+                <div id="childrenContainer"></div>
+                <button type="button" class="btn-secondary" onclick="addChildRow()">+ තවත් දරුවෙක් එකතු කරන්න</button>
+            </div>
+
+            <button type="submit" style="margin-top: 10px;">දත්ත සුරකින්න</button>
+        </form>
+    </div>
+
+    <!-- නිශ්චිත කාලයකට අදාළ දරුවන්ගේ හා අවදානම් තත්වයේ වාර්තාව -->
+    <div class="form-section" id="childPeriodReportSection">
+        <div class="filter-bar no-print" style="justify-content: space-between; width:100%;">
+            <h3 style="margin:0;">කාල සීමාව අනුව දරුවන්ගේ හා අවදානම් තත්වයේ වාර්තාව</h3>
+            <button type="button" class="btn-print" onclick="printActiveReport('childPeriodPreview')">දරුවන්ගේ වාර්තාව මුද්‍රණය (Print)</button>
+        </div>
+        <div class="filter-bar no-print">
+            <div>
+                <label for="reportFromDate">ආරම්භක දිනය (From):</label>
+                <input type="date" id="reportFromDate" class="form-control">
+            </div>
+            <div>
+                <label for="reportToDate">අවසාන දිනය (To):</label>
+                <input type="date" id="reportToDate" class="form-control">
+            </div>
+            <div>
+                <label for="reportRiskFilter">අවදානම් තත්වය:</label>
+                <select id="reportRiskFilter" class="form-control">
+                    <option value="ALL">සියල්ල</option>
+                    <option value="ඉහළ අවදානම්">ඉහළ අවදානම්</option>
+                    <option value="මධ්‍යස්ථ අවදානම්">මධ්‍යස්ථ අවදානම්</option>
+                    <option value="සාමාන්‍ය">සාමාන්‍ය</option>
+                </select>
+            </div>
+            <button type="button" onclick="generateChildPeriodReport()">Preview වාර්තාව</button>
+            <button type="button" class="btn-secondary" onclick="resetChildPeriodReport()">Reset</button>
+        </div>
+
+        <div id="childPeriodPreview" class="report-preview-box">
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>විදේශගත පුද්ගලයාගේ නම</th>
+                            <th>ජාතික හැඳුනුම්පත් අංකය</th>
+                            <th>ගමන් බලපත්‍ර අංකය</th>
+                            <th>දරුවාගේ නම</th>
+                            <th>උපන් දිනය</th>
+                            <th>පාසැල්</th>
+                            <th>ශ්‍රේණිය</th>
+                            <th>දරුවාගේ අවදානම් තත්වය</th>
+                        </tr>
+                    </thead>
+                    <tbody id="childPeriodReportBody">
+                        <tr><td colspan="8" style="text-align:center;">දත්ත පූරණය වෙමින් පවතී...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 19-Column පිළිවෙළට ශ්‍රමිකයින්ගේ වාර්තා වගුව -->
+    <div class="form-section" id="fullMasterReportSection">
+        <div class="filter-bar no-print" style="justify-content: space-between; width:100%;">
+            <h3 style="margin:0;">ශ්‍රමිකයින්ගේ සම්පූර්ණ ලැයිස්තුව (වාර්තා පිළිවෙළ)</h3>
+            <button type="button" class="btn-print" onclick="printActiveReport('masterTablePreview')">සම්පූර්ණ ලැයිස්තුව මුද්‍රණය (Print)</button>
+        </div>
+        <div id="masterTablePreview" class="report-preview-box">
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr id="reportTableHead"></tr>
+                    </thead>
+                    <tbody id="workersTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Firebase වින්‍යාසය
+    const firebaseConfig = {
+        projectId: "migrant-workers-details",
+        appId: "1:726730093986:web:61725edc1d0e15ba0caefb"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
+    window.allWorkers = [];
+    let currentPrintTargetId = null;
+
+    const REPORT_COLUMNS = [
+        { label: "SLBFE Registration No", keys: ["slbfeRegNo", "SLBFE Registration No", "slbfeNo", "regNo"] },
+        { label: "Name", keys: ["name", "Name", "fullName"] },
+        { label: "Passport No", keys: ["passportNo", "Passport No", "passport"] },
+        { label: "National Identifi cad No", keys: ["nic", "National Identifi cad No", "National Identity Card No", "idNo"] },
+        { label: "Gender", keys: ["gender", "Gender", "sex"] },
+        { label: "Address", keys: ["address", "Address"] },
+        { label: "GN Division", keys: ["gnDivision", "GN Division", "gn"] },
+        { label: "DS Division", keys: ["dsDivision", "DS Division", "ds"] },
+        { label: "District", keys: ["district", "District"] },
+        { label: "Country", keys: ["country", "Country"] },
+        { label: "Job", keys: ["job", "Job", "occupation"] },
+        { label: "Depature Date", keys: ["departureDate", "Depature Date", "Departure Date"] },
+        { label: "Register Date", keys: ["registerDate", "Register Date"] },
+        { label: "License Number", keys: ["licenseNumber", "License Number"] },
+        { label: "Agency Name", keys: ["agencyName", "Agency Name"] },
+        { label: "Nominee Name", keys: ["nomineeName", "Nominee Name"] },
+        { label: "Relation", keys: ["relation", "Relation"] },
+        { label: "Nominee Address", keys: ["nomineeAddress", "Nominee Address"] },
+        { label: "Nominee Contact No", keys: ["nomineeContactNo", "Nominee Contact No"] }
+    ];
+
+    function normalizeGenderValue(val) {
+        if (!val) return "";
+        const g = String(val).trim().toUpperCase();
+        if (g === "F" || g.startsWith("F") || g.includes("කාන්තා") || g.includes("ස්ත්‍රී")) {
+            return "F";
+        }
+        if (g === "M" || g.startsWith("M") || g.includes("පිරිමි")) {
+            return "M";
+        }
+        return "";
+    }
+
+    function getWorkerGender(data) {
+        const candidates = [
+            data.Gender, data.gender, data["Gender"], data.sex, data.Sex, data.col4, data.E, data.e
+        ];
+        for (const item of candidates) {
+            const normalized = normalizeGenderValue(item);
+            if (normalized) return normalized;
+        }
+        for (const [key, value] of Object.entries(data || {})) {
+            if (key.toLowerCase().includes("gender") || key.toLowerCase() === "sex") {
+                const normalized = normalizeGenderValue(value);
+                if (normalized) return normalized;
+            }
+        }
+        return "";
+    }
+
+    function getFieldValue(docData, possibleKeys) {
+        for (const k of possibleKeys) {
+            if (docData[k] !== undefined && docData[k] !== null && String(docData[k]).trim() !== "") {
+                return String(docData[k]).trim();
+            }
+        }
+        return "-";
+    }
+
+    function parseDateSafe(val) {
+        if (!val) return null;
+        if (val.toDate) return val.toDate();
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    function formatDateDisplay(val) {
+        const d = parseDateSafe(val);
+        if (!d) return val ? String(val) : "-";
+        return d.toISOString().split("T")[0];
+    }
+
+    // නිශ්චිත කාලසීමාවක් තුළ කාන්තා / පුරුෂ / සමස්ත විදේශගත වාර්තාව
+    function generatePeriodGenderReport() {
+        const fromVal = document.getElementById("periodFromDate")?.value;
+        const toVal = document.getElementById("periodToDate")?.value;
+        const genderFilter = document.getElementById("periodGenderFilter")?.value || "ALL";
+
+        const fromDate = fromVal ? new Date(fromVal + "T00:00:00") : null;
+        const toDate = toVal ? new Date(toVal + "T23:59:59") : null;
+
+        let femaleCount = 0;
+        let maleCount = 0;
+        let totalCount = 0;
+        const rows = [];
+
+        (window.allWorkers || []).forEach(worker => {
+            const rawDate = worker.departureDate || worker["Depature Date"] || worker["Departure Date"] || worker.registerDate || worker["Register Date"] || worker.createdAt;
+            const refDate = parseDateSafe(rawDate);
+
+            const inDateRange =
+                (!fromDate && !toDate) ||
+                (refDate && (!fromDate || refDate >= fromDate) && (!toDate || refDate <= toDate));
+
+            if (!inDateRange) return;
+
+            const g = getWorkerGender(worker);
+            if (g === "F") femaleCount++;
+            else if (g === "M") maleCount++;
+            totalCount++;
+
+            if (genderFilter !== "ALL" && g !== genderFilter) return;
+
+            const name = getFieldValue(worker, ["name", "Name", "fullName"]);
+            const nic = getFieldValue(worker, ["nic", "National Identifi cad No", "National Identity Card No", "idNo"]);
+            const passport = getFieldValue(worker, ["passportNo", "Passport No", "passport"]);
+            const country = getFieldValue(worker, ["country", "Country"]);
+            const dateText = formatDateDisplay(rawDate);
+
+            rows.push(`
+                <tr>
+                    <td>${rows.length + 1}</td>
+                    <td>${name}</td>
+                    <td><strong>${g || "-"}</strong></td>
+                    <td>${nic}</td>
+                    <td>${passport}</td>
+                    <td>${country}</td>
+                    <td>${dateText}</td>
+                </tr>
+            `);
+        });
+
+        const rangeLabel = (fromVal || toVal)
+            ? `කාලසීමාව: ${fromVal || "ආරම්භයේ සිට"} සිට ${toVal || "අද දක්වා"}`
+            : "සියලු දින (All Dates)";
+
+        const titleEl = document.getElementById("periodReportTitle");
+        if (titleEl) {
+            titleEl.innerText = `විදේශගත වූ කාන්තා, පුරුෂ සහ සමස්ත වාර්තාව — ${rangeLabel}`;
+        }
+
+        document.getElementById("periodFemaleCount").innerText = femaleCount;
+        document.getElementById("periodMaleCount").innerText = maleCount;
+        document.getElementById("periodTotalCount").innerText = totalCount;
+
+        const tbody = document.getElementById("periodGenderReportBody");
+        tbody.innerHTML = rows.length
+            ? rows.join("")
+            : `<tr><td colspan="7" style="text-align:center;">තෝරාගත් කාලසීමාවට අදාළ වාර්තා හමු නොවීය.</td></tr>`;
+    }
+
+    function resetPeriodGenderReport() {
+        document.getElementById("periodFromDate").value = "";
+        document.getElementById("periodToDate").value = "";
+        document.getElementById("periodGenderFilter").value = "ALL";
+        generatePeriodGenderReport();
+    }
+
+    // ඕනෑම වාර්තාවක් Preview / Print කිරීම
+    function printActiveReport(targetBoxId) {
+        const targetEl = document.getElementById(targetBoxId);
+        if (!targetEl) {
+            window.print();
+            return;
+        }
+
+        const printWindow = window.open("", "_blank", "width=1000,height=700");
+        if (!printWindow) {
+            window.print();
+            return;
+        }
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="si">
+            <head>
+                <meta charset="UTF-8">
+                <title>වාර්තාව මුද්‍රණය - වැලිපිටිය ප්‍රාදේශීය ලේකම් කාර්යාලය</title>
+                <style>
+                    body { font-family: 'Iskoola Pota', sans-serif; padding: 20px; color: #1a202c; }
+                    h2, h4 { margin-top: 0; color: #1a365d; }
+                    .summary-strip { display: flex; gap: 15px; margin: 12px 0 18px 0; }
+                    .summary-box { border: 1px solid #cbd5e0; padding: 10px 14px; border-radius: 6px; background: #f7fafc; flex: 1; }
+                    .summary-box span { display: block; font-size: 12px; color: #4a5568; }
+                    .summary-box strong { font-size: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                    th, td { border: 1px solid #4a5568; padding: 6px 8px; text-align: left; font-size: 12px; }
+                    th { background: #edf2f7; }
+                </style>
+            </head>
+            <body>
+                <h2>විදේශ ගත ශ්‍රමික තොරතුරු පද්ධතිය - වැලිපිටිය ප්‍රාදේශීය ලේකම් කාර්යාලය</h2>
+                ${targetEl.innerHTML}
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    }
+
+    function renderReportTable(workersList) {
+        const theadRow = document.getElementById("reportTableHead");
+        const tbody = document.getElementById("workersTableBody");
+
+        if (theadRow) {
+            theadRow.innerHTML = REPORT_COLUMNS.map(col => `<th>${col.label}</th>`).join("");
+        }
+        if (!tbody) return;
+
+        tbody.innerHTML = workersList.map(worker => {
+            const cells = REPORT_COLUMNS.map(col => {
+                let val = getFieldValue(worker, col.keys);
+                if (col.label === "Gender") {
+                    const normalized = getWorkerGender(worker);
+                    if (normalized) val = normalized;
+                }
+                return `<td>${val}</td>`;
+            }).join("");
+            return `<tr>${cells}</tr>`;
+        }).join("");
+    }
+
+    function addChildRow(child = {}) {
+        const container = document.getElementById("childrenContainer");
+        const rowId = "child_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+
+        const div = document.createElement("div");
+        div.className = "child-row";
+        div.id = rowId;
+        div.innerHTML = `
+            <input type="text" placeholder="දරුවාගේ නම" class="form-control child-name" style="flex:1; min-width:160px;" value="${child.childName || ""}" required>
+            <input type="date" title="උපන් දිනය" class="form-control child-dob" style="width:155px;" value="${child.dob || ""}">
+            <input type="text" placeholder="පාසැල්" class="form-control child-school" style="flex:1; min-width:150px;" value="${child.school || ""}">
+            <input type="text" placeholder="ශ්‍රේණිය" class="form-control child-grade" style="width:110px;" value="${child.grade || ""}">
+            <select class="form-control child-risk" style="width:180px;">
+                <option value="සාමාන්‍ය" ${child.riskStatus === "සාමාන්‍ය" ? "selected" : ""}>සාමාන්‍ය</option>
+                <option value="මධ්‍යස්ථ අවදානම්" ${child.riskStatus === "මධ්‍යස්ථ අවදානම්" ? "selected" : ""}>මධ්‍යස්ථ අවදානම්</option>
+                <option value="ඉහළ අවදානම්" ${child.riskStatus === "ඉහළ අවදානම්" ? "selected" : ""}>ඉහළ අවදානම්</option>
+            </select>
+            <button type="button" class="btn-danger" onclick="document.getElementById('${rowId}').remove()">ඉවත් කරන්න</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function collectChildrenData() {
+        const children = [];
+        document.querySelectorAll("#childrenContainer .child-row").forEach(row => {
+            const childName = row.querySelector(".child-name")?.value.trim() || "";
+            const dob = row.querySelector(".child-dob")?.value.trim() || "";
+            const school = row.querySelector(".child-school")?.value.trim() || "";
+            const grade = row.querySelector(".child-grade")?.value.trim() || "";
+            const riskStatus = row.querySelector(".child-risk")?.value.trim() || "සාමාන්‍ය";
+
+            if (childName || dob || school || grade) {
+                children.push({ childName, dob, school, grade, riskStatus });
+            }
+        });
+        return children;
+    }
+
+    function generateChildPeriodReport() {
+        const fromVal = document.getElementById("reportFromDate")?.value;
+        const toVal = document.getElementById("reportToDate")?.value;
+        const riskFilter = document.getElementById("reportRiskFilter")?.value || "ALL";
+
+        const fromDate = fromVal ? new Date(fromVal + "T00:00:00") : null;
+        const toDate = toVal ? new Date(toVal + "T23:59:59") : null;
+
+        const tbody = document.getElementById("childPeriodReportBody");
+        if (!tbody) return;
+
+        const rows = [];
+
+        (window.allWorkers || []).forEach(worker => {
+            const workerName = getFieldValue(worker, ["name", "Name", "fullName"]);
+            const nic = getFieldValue(worker, ["nic", "National Identifi cad No", "National Identity Card No", "idNo"]);
+            const passport = getFieldValue(worker, ["passportNo", "Passport No", "passport"]);
+
+            const refDate = parseDateSafe(
+                worker.registerDate || worker["Register Date"] || worker.departureDate || worker["Depature Date"] || worker.createdAt
+            );
+
+            const inDateRange =
+                (!fromDate && !toDate) ||
+                (refDate && (!fromDate || refDate >= fromDate) && (!toDate || refDate <= toDate));
+
+            if (!inDateRange) return;
+
+            const children = Array.isArray(worker.children) ? worker.children : [];
+            children.forEach(child => {
+                const cName = child.childName || child.name || "-";
+                const cDob = child.dob || "-";
+                const cSchool = child.school || "-";
+                const cGrade = child.grade || "-";
+                const cRisk = child.riskStatus || child.risk || "සාමාන්‍ය";
+
+                if (riskFilter !== "ALL" && cRisk !== riskFilter) return;
+
+                rows.push(`
+                    <tr>
+                        <td>${workerName}</td>
+                        <td>${nic}</td>
+                        <td>${passport}</td>
+                        <td>${cName}</td>
+                        <td>${cDob}</td>
+                        <td>${cSchool}</td>
+                        <td>${cGrade}</td>
+                        <td><strong>${cRisk}</strong></td>
+                    </tr>
+                `);
+            });
+        });
+
+        tbody.innerHTML = rows.length
+            ? rows.join("")
+            : `<tr><td colspan="8" style="text-align:center;">තෝරාගත් කාල සීමාවට හෝ පෙරහනට අදාළ දරුවන්ගේ වාර්තා හමු නොවීය.</td></tr>`;
+    }
+
+    function resetChildPeriodReport() {
+        document.getElementById("reportFromDate").value = "";
+        document.getElementById("reportToDate").value = "";
+        document.getElementById("reportRiskFilter").value = "ALL";
+        generateChildPeriodReport();
+    }
+
+    function loadDashboardStats() {
+        db.collection("workers").onSnapshot((snapshot) => {
+            let total = 0;
+            let female = 0;
+            let male = 0;
+            let risk = 0;
+            const workersList = [];
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                workersList.push(data);
+                total++;
+
+                const gender = getWorkerGender(data);
+                if (gender === "F") female++;
+                else if (gender === "M") male++;
+
+                const hasHighRiskChild = Array.isArray(data.children) &&
+                    data.children.some(c => (c.riskStatus || "").includes("අවදානම්") && !(c.riskStatus || "").includes("සාමාන්‍ය"));
+
+                if (data.isRiskFamily || data.riskLevel === "High" || hasHighRiskChild) {
+                    risk++;
+                }
+            });
+
+            window.allWorkers = workersList;
+
+            document.getElementById("total-workers").innerText = total;
+            document.getElementById("female-count").innerText = female;
+            document.getElementById("male-count").innerText = male;
+            document.getElementById("risk-count").innerText = risk;
+
+            renderReportTable(workersList);
+            generateChildPeriodReport();
+            generatePeriodGenderReport();
+        });
+    }
+
+    document.getElementById("workerForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const children = collectChildrenData();
+        const depDate = document.getElementById("departureDate").value;
+
+        const workerData = {
+            name: document.getElementById("name").value.trim(),
+            gender: document.getElementById("gender").value.toUpperCase(),
+            nic: document.getElementById("nic").value.trim(),
+            passportNo: document.getElementById("passport").value.trim(),
+            passport: document.getElementById("passport").value.trim(),
+            country: document.getElementById("country").value.trim(),
+            departureDate: depDate,
+            registerDate: depDate,
+            children: children,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        db.collection("workers").add(workerData)
+            .then(() => {
+                alert("ශ්‍රමිකයාගේ දත්ත සාර්ථකව එකතු කරන ලදී!");
+                document.getElementById("workerForm").reset();
+                document.getElementById("childrenContainer").innerHTML = "";
+            })
+            .catch((error) => {
+                console.error("දෝෂයක් ඇතිවිය: ", error);
+                alert("දත්ත ඇතුළත් කිරීමේදී දෝෂයක් ඇතිවිය.");
+            });
+    });
+
+    window.onload = function() {
+        loadDashboardStats();
+    };
+</script>
+
+</body>
+</html>
