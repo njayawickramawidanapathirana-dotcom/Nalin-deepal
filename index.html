@@ -8,61 +8,192 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <!-- SheetJS for Excel / CSV Import -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        body { font-family: 'Iskoola Pota', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; direction: ltr; }
-        .container { max-width: 1400px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h2, h3, h4 { color: #1a365d; margin-top: 0; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: #f8fafc; border-left: 5px solid #3182ce; padding: 15px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .stat-card h4 { margin: 0 0 10px 0; color: #4a5568; font-size: 14px; }
-        .stat-card p { margin: 0; font-size: 24px; font-weight: bold; color: #2d3748; }
-        .form-section { background: #f7fafc; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568; }
-        .form-control { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #cbd5e0; border-radius: 4px; }
-        button { background: #3182ce; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 15px; }
-        button:hover { background: #2b6cb0; }
-        .child-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; padding: 10px; background: #fff; border: 1px solid #cbd5e0; border-radius: 6px; align-items: center; }
-        .btn-danger { background: #e53e3e; padding: 8px 12px; font-size: 14px; }
-        .btn-danger:hover { background: #c53030; }
-        .btn-secondary { background: #4a5568; }
-        .btn-secondary:hover { background: #2d3748; }
-        .btn-print { background: #2f855a; }
-        .btn-print:hover { background: #276749; }
-        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        th, td { border: 1px solid #cbd5e0; padding: 8px; text-align: left; font-size: 13px; white-space: nowrap; }
-        th { background: #edf2f7; color: #1a365d; }
-        .filter-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 14px; }
-
-        /* Print Preview Box */
-        .report-preview-box {
-            background: #ffffff;
-            border: 1px solid #cbd5e0;
-            border-radius: 6px;
-            padding: 16px;
-            margin-top: 12px;
+        :root {
+            --primary: #1e3a8a;
+            --primary-hover: #1d4ed8;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --muted: #475569;
+            --border: #cbd5e1;
+            --success: #15803d;
+            --danger: #dc2626;
         }
-        .summary-strip {
+        body {
+            font-family: 'Iskoola Pota', sans-serif;
+            background-color: var(--bg);
+            color: #0f172a;
+            margin: 0;
+            padding: 18px;
+        }
+        .container {
+            max-width: 1420px;
+            margin: auto;
+            background: var(--card);
+            padding: 22px;
+            border-radius: 10px;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+        }
+        .header-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 18px;
+        }
+        h2, h3, h4 { color: var(--primary); margin: 0 0 10px 0; }
+        .role-panel {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-left: 5px solid var(--primary);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: bold;
+            background: var(--primary);
+            color: #fff;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        .stat-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 5px solid #2563eb;
+            padding: 14px;
+            border-radius: 8px;
+        }
+        .stat-card h4 { font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+        .stat-card p { font-size: 24px; font-weight: bold; margin: 0; color: #0f172a; }
+        .section-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 12px;
+        }
+        .form-group { margin-bottom: 10px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 8px 10px;
+            box-sizing: border-box;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: #fff;
+            font-size: 14px;
+        }
+        button {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 9px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        button:hover { background: var(--primary-hover); }
+        .btn-secondary { background: #475569; }
+        .btn-secondary:hover { background: #334155; }
+        .btn-danger { background: var(--danger); padding: 7px 11px; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-print { background: var(--success); }
+        .btn-print:hover { background: #166534; }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 12px;
+        }
+        .child-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .preview-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 10px;
+        }
+        .summary-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 12px;
-            margin: 12px 0 16px 0;
+            margin: 10px 0 14px 0;
         }
-        .summary-box {
-            background: #edf2f7;
-            padding: 12px;
+        .summary-item {
+            background: #f1f5f9;
+            border-left: 4px solid var(--primary);
+            padding: 10px 12px;
             border-radius: 6px;
-            border-left: 4px solid #2b6cb0;
         }
-        .summary-box span { display: block; font-size: 13px; color: #4a5568; }
-        .summary-box strong { font-size: 22px; color: #1a202c; }
+        .summary-item span { display: block; font-size: 12px; color: var(--muted); }
+        .summary-item strong { font-size: 20px; color: #0f172a; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 7px 9px;
+            text-align: left;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        th { background: #e2e8f0; color: #0f172a; }
+        .status-box {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            background: #e0f2fe;
+            color: #0c4a6e;
+            font-size: 14px;
+        }
+        .hidden { display: none !important; }
 
-        /* මුද්‍රණය කරන විට (Print) පාලන බොත්තම් සහ පෝරම සැඟවීම */
         @media print {
             body { background: #fff; padding: 0; }
             .container { box-shadow: none; max-width: 100%; padding: 0; }
             .no-print { display: none !important; }
-            .report-preview-box { border: none; padding: 0; }
+            .preview-card { border: none; padding: 0; }
             th, td { white-space: normal; font-size: 11px; padding: 5px; }
         }
     </style>
@@ -70,72 +201,120 @@
 <body>
 
 <div class="container">
-    <h2>විදේශ ගත ශ්‍රමික තොරතුරු පද්ධතිය - වැලිපිටිය ප්‍රාදේශීය ලේකම් කාර්යාලය</h2>
+    <div class="header-bar">
+        <div>
+            <h2>විදේශ ගත ශ්‍රමික තොරතුරු පද්ධතිය</h2>
+            <div style="font-size:14px; color:#475569;">වැලිපිටිය ප්‍රාදේශීය ලේකම් කාර්යාලය — කණ්ඩායම් දත්ත හා වාර්තා පද්ධතිය</div>
+        </div>
+        <div id="syncStatus" class="badge" style="background:#0f766e;">Firestore සම්බන්ධ වෙමින් පවතී...</div>
+    </div>
 
-    <!-- ඩෑෂ්බෝඩ් සංඛ්‍යා ලේඛන -->
-    <div class="stats-grid no-print">
-        <div class="stat-card">
-            <h4>මුළු විදේශ ගත ශ්‍රමිකයින්</h4>
-            <p id="total-workers">0</p>
+    <!-- Role Switcher (Admin / Officer) -->
+    <div class="role-panel no-print">
+        <div>
+            <span>වත්මන් භූමිකාව: </span>
+            <span id="roleBadge" class="badge">OFFICER</span>
+            <span id="roleHint" style="margin-left:8px; font-size:13px; color:#334155;">
+                Officer: පෝරමයෙන් දත්ත ඇතුළත් කිරීමට සහ වාර්තා Preview / Print කිරීමට හැකිය.
+            </span>
         </div>
-        <div class="stat-card" style="border-left-color: #ed64a6;">
-            <h4>කාන්තා ශ්‍රමිකයින් (F)</h4>
-            <p id="female-count">0</p>
-        </div>
-        <div class="stat-card" style="border-left-color: #4299e1;">
-            <h4>පිරිමි ශ්‍රමිකයින් (M)</h4>
-            <p id="male-count">0</p>
-        </div>
-        <div class="stat-card" style="border-left-color: #ecc94b;">
-            <h4>විශේෂ අවධානම් පවුල් / දරුවන්</h4>
-            <p id="risk-count">0</p>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <label for="roleSelector" style="font-size:13px; font-weight:bold;">භූමිකාව:</label>
+            <select id="roleSelector" class="form-control" style="width:auto;" onchange="onRoleSelectChange()">
+                <option value="OFFICER">Officer</option>
+                <option value="ADMIN">Admin (Excel Import)</option>
+            </select>
+            <input type="password" id="adminPinField" class="form-control hidden" placeholder="Admin PIN (1234)" style="width:145px;">
+            <button type="button" id="adminPinConfirmBtn" class="hidden" onclick="confirmAdminPin()">තහවුරු කරන්න</button>
         </div>
     </div>
 
-    <!-- නව වාර්තාව: නිශ්චිත කාලසීමාවක් තුළ කාන්තා / පුරුෂ / සමස්ත විදේශගත වාර්තාව (Preview & Print) -->
-    <div class="form-section" id="periodGenderReportSection">
-        <h3 class="no-print">කාලසීමාව අනුව විදේශගත වූ කාන්තා, පුරුෂ සහ සමස්ත වාර්තාව</h3>
+    <!-- Dashboard Summary Cards -->
+    <div class="stats-grid no-print">
+        <div class="stat-card">
+            <h4>මුළු විදේශ ගත ශ්‍රමිකයින්</h4>
+            <p id="statTotal">0</p>
+        </div>
+        <div class="stat-card" style="border-left-color:#db2777;">
+            <h4>කාන්තා ශ්‍රමිකයින් (F)</h4>
+            <p id="statFemale">0</p>
+        </div>
+        <div class="stat-card" style="border-left-color:#0284c7;">
+            <h4>පිරිමි ශ්‍රමිකයින් (M)</h4>
+            <p id="statMale">0</p>
+        </div>
+        <div class="stat-card" style="border-left-color:#d97706;">
+            <h4>අවදානම් සහගත දරුවන් / පවුල්</h4>
+            <p id="statRisk">0</p>
+        </div>
+    </div>
 
-        <div class="filter-bar no-print">
+    <!-- ADMIN ONLY: Excel / CSV Import (Duplicate Protected) -->
+    <div class="section-box no-print hidden" id="adminImportBox" style="background:#f0f9ff; border-color:#7dd3fc;">
+        <h3>Excel / CSV ගොනුවෙන් දත්ත Import කිරීම (Admin පමණි)</h3>
+        <p style="font-size:13px; color:#334155; margin-top:0;">
+            පවතින <strong>SLBFE Registration No</strong>, <strong>Passport No</strong>, හෝ <strong>NIC</strong> සමඟ ගැළපේ නම් duplicate නොවන ලෙස ස්වයංක්‍රීයව මඟහැරේ.
+        </p>
+        <div class="filter-row">
             <div>
-                <label for="periodFromDate">ආරම්භක දිනය (From):</label>
-                <input type="date" id="periodFromDate" class="form-control">
+                <label for="excelFile">Excel (.xlsx, .xls) හෝ CSV ගොනුව:</label>
+                <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" class="form-control">
+            </div>
+            <button type="button" onclick="handleExcelFileImport()">Excel ගොනුව Import කරන්න</button>
+        </div>
+        <div class="form-group">
+            <label for="excelPasteText">හෝ Excel වෙතින් Copy කළ පේළි මෙහි Paste කරන්න:</label>
+            <textarea id="excelPasteText" rows="3" class="form-control" placeholder="Excel පේළි මෙහි paste කරන්න..."></textarea>
+        </div>
+        <button type="button" class="btn-secondary" onclick="handleExcelPasteImport()">Paste කළ දත්ත Import කරන්න</button>
+        <div id="importResultBox" class="status-box hidden"></div>
+    </div>
+
+    <!-- REPORT 1: Period Gender & Total Report (Preview & Print) -->
+    <div class="section-box" id="periodGenderSection">
+        <div class="filter-row no-print" style="justify-content:space-between;">
+            <h3 style="margin:0;">1. කාලසීමාව අනුව විදේශගත වූ කාන්තා, පුරුෂ සහ සමස්ත වාර්තාව</h3>
+            <button type="button" class="btn-print" onclick="printPreviewSection('periodGenderPreview', 'කාලසීමාව අනුව විදේශගත වූ පිරිසගේ වාර්තාව')">මුද්‍රණය කරන්න (Print)</button>
+        </div>
+
+        <div class="filter-row no-print">
+            <div>
+                <label for="pgFrom">ආරම්භක දිනය (From):</label>
+                <input type="date" id="pgFrom" class="form-control">
             </div>
             <div>
-                <label for="periodToDate">අවසාන දිනය (To):</label>
-                <input type="date" id="periodToDate" class="form-control">
+                <label for="pgTo">අවසාන දිනය (To):</label>
+                <input type="date" id="pgTo" class="form-control">
             </div>
             <div>
-                <label for="periodGenderFilter">ස්ත්‍රි / පුරුෂ පෙරහන:</label>
-                <select id="periodGenderFilter" class="form-control">
+                <label for="pgGender">ස්ත්‍රි / පුරුෂ පෙරහන:</label>
+                <select id="pgGender" class="form-control">
                     <option value="ALL">සියල්ල (සමස්තය)</option>
                     <option value="F">කාන්තා පමණි (F)</option>
                     <option value="M">පිරිමි පමණි (M)</option>
                 </select>
             </div>
-            <button type="button" onclick="generatePeriodGenderReport()">Preview වාර්තාව</button>
+            <button type="button" onclick="renderPeriodGenderReport()">Preview වාර්තාව</button>
             <button type="button" class="btn-secondary" onclick="resetPeriodGenderReport()">Reset</button>
-            <button type="button" class="btn-print" onclick="printActiveReport('periodGenderPreview')">මුද්‍රණය කරන්න (Print)</button>
         </div>
 
-        <div id="periodGenderPreview" class="report-preview-box">
-            <h4 id="periodReportTitle">කාලසීමාව අනුව විදේශගත වූ පිරිසගේ වාර්තාව (සියලු දින)</h4>
-            <div class="summary-strip">
-                <div class="summary-box" style="border-left-color: #ed64a6;">
+        <div id="periodGenderPreview" class="preview-card">
+            <h4 id="pgHeading">කාලසීමාව අනුව විදේශගත වූ පිරිසගේ වාර්තාව (සියලු දින)</h4>
+            <div class="summary-grid">
+                <div class="summary-item" style="border-left-color:#db2777;">
                     <span>කාන්තාවන් ප්‍රමාණය (F)</span>
-                    <strong id="periodFemaleCount">0</strong>
+                    <strong id="pgFemaleTotal">0</strong>
                 </div>
-                <div class="summary-box" style="border-left-color: #3182ce;">
+                <div class="summary-item" style="border-left-color:#0284c7;">
                     <span>පුරුෂයන් ප්‍රමාණය (M)</span>
-                    <strong id="periodMaleCount">0</strong>
+                    <strong id="pgMaleTotal">0</strong>
                 </div>
-                <div class="summary-box" style="border-left-color: #2f855a;">
+                <div class="summary-item" style="border-left-color:#15803d;">
                     <span>සමස්ත විදේශගත ප්‍රමාණය (Total)</span>
-                    <strong id="periodTotalCount">0</strong>
+                    <strong id="pgGrandTotal">0</strong>
                 </div>
             </div>
-
-            <div style="overflow-x:auto;">
+            <div class="table-wrap">
                 <table>
                     <thead>
                         <tr>
@@ -148,7 +327,7 @@
                             <th>පිටත්වීමේ / ලියාපදිංචි දිනය</th>
                         </tr>
                     </thead>
-                    <tbody id="periodGenderReportBody">
+                    <tbody id="pgTableBody">
                         <tr><td colspan="7" style="text-align:center;">දත්ත පූරණය වෙමින් පවතී...</td></tr>
                     </tbody>
                 </table>
@@ -156,80 +335,37 @@
         </div>
     </div>
 
-    <!-- නව ඇතුළත් කිරීමේ පෝරමය -->
-    <div class="form-section no-print">
-        <h3>නව ශ්‍රමිකයෙකු ඇතුළත් කිරීම</h3>
-        <form id="workerForm">
-            <div class="form-group">
-                <label for="name">සම්පූර්ණ නම:</label>
-                <input type="text" id="name" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="gender">ලිංගභේදය (F / M):</label>
-                <select id="gender" class="form-control" required>
-                    <option value="">තෝරන්න...</option>
-                    <option value="F">F (කාන්තා)</option>
-                    <option value="M">M (පිරිමි)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="nic">ජාතික හැඳුනුම්පත් අංකය (NIC):</label>
-                <input type="text" id="nic" class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="passport">ගමන් බලපත්‍ර අංකය (Passport):</label>
-                <input type="text" id="passport" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="country">රට (Country):</label>
-                <input type="text" id="country" class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="departureDate">පිටත්වීමේ / ලියාපදිංචි දිනය:</label>
-                <input type="date" id="departureDate" class="form-control">
-            </div>
-
-            <!-- දරුවන්ගේ තොරතුරු වෙන වෙනම ඇතුළත් කිරීමේ කොටස -->
-            <div class="form-section" style="background: #edf2f7;">
-                <h3>දරුවන්ගේ තොරතුරු</h3>
-                <div id="childrenContainer"></div>
-                <button type="button" class="btn-secondary" onclick="addChildRow()">+ තවත් දරුවෙක් එකතු කරන්න</button>
-            </div>
-
-            <button type="submit" style="margin-top: 10px;">දත්ත සුරකින්න</button>
-        </form>
-    </div>
-
-    <!-- නිශ්චිත කාලයකට අදාළ දරුවන්ගේ හා අවදානම් තත්වයේ වාර්තාව -->
-    <div class="form-section" id="childPeriodReportSection">
-        <div class="filter-bar no-print" style="justify-content: space-between; width:100%;">
-            <h3 style="margin:0;">කාල සීමාව අනුව දරුවන්ගේ හා අවදානම් තත්වයේ වාර්තාව</h3>
-            <button type="button" class="btn-print" onclick="printActiveReport('childPeriodPreview')">දරුවන්ගේ වාර්තාව මුද්‍රණය (Print)</button>
+    <!-- REPORT 2: Period Children & Risk Status Report (Preview & Print) -->
+    <div class="section-box" id="childRiskSection">
+        <div class="filter-row no-print" style="justify-content:space-between;">
+            <h3 style="margin:0;">2. කාලසීමාව අනුව දරුවන්ගේ විස්තර හා අවදානම් තත්වයේ වාර්තාව</h3>
+            <button type="button" class="btn-print" onclick="printPreviewSection('childRiskPreview', 'දරුවන්ගේ විස්තර හා අවදානම් තත්වයේ වාර්තාව')">දරුවන්ගේ වාර්තාව මුද්‍රණය (Print)</button>
         </div>
-        <div class="filter-bar no-print">
+
+        <div class="filter-row no-print">
             <div>
-                <label for="reportFromDate">ආරම්භක දිනය (From):</label>
-                <input type="date" id="reportFromDate" class="form-control">
+                <label for="crFrom">ආරම්භක දිනය (From):</label>
+                <input type="date" id="crFrom" class="form-control">
             </div>
             <div>
-                <label for="reportToDate">අවසාන දිනය (To):</label>
-                <input type="date" id="reportToDate" class="form-control">
+                <label for="crTo">අවසාන දිනය (To):</label>
+                <input type="date" id="crTo" class="form-control">
             </div>
             <div>
-                <label for="reportRiskFilter">අවදානම් තත්වය:</label>
-                <select id="reportRiskFilter" class="form-control">
+                <label for="crRisk">අවදානම් තත්වය:</label>
+                <select id="crRisk" class="form-control">
                     <option value="ALL">සියල්ල</option>
                     <option value="ඉහළ අවදානම්">ඉහළ අවදානම්</option>
                     <option value="මධ්‍යස්ථ අවදානම්">මධ්‍යස්ථ අවදානම්</option>
                     <option value="සාමාන්‍ය">සාමාන්‍ය</option>
                 </select>
             </div>
-            <button type="button" onclick="generateChildPeriodReport()">Preview වාර්තාව</button>
-            <button type="button" class="btn-secondary" onclick="resetChildPeriodReport()">Reset</button>
+            <button type="button" onclick="renderChildRiskReport()">Preview වාර්තාව</button>
+            <button type="button" class="btn-secondary" onclick="resetChildRiskReport()">Reset</button>
         </div>
 
-        <div id="childPeriodPreview" class="report-preview-box">
-            <div style="overflow-x:auto;">
+        <div id="childRiskPreview" class="preview-card">
+            <div class="table-wrap">
                 <table>
                     <thead>
                         <tr>
@@ -243,7 +379,7 @@
                             <th>දරුවාගේ අවදානම් තත්වය</th>
                         </tr>
                     </thead>
-                    <tbody id="childPeriodReportBody">
+                    <tbody id="crTableBody">
                         <tr><td colspan="8" style="text-align:center;">දත්ත පූරණය වෙමින් පවතී...</td></tr>
                     </tbody>
                 </table>
@@ -251,19 +387,117 @@
         </div>
     </div>
 
-    <!-- 19-Column පිළිවෙළට ශ්‍රමිකයින්ගේ වාර්තා වගුව -->
-    <div class="form-section" id="fullMasterReportSection">
-        <div class="filter-bar no-print" style="justify-content: space-between; width:100%;">
-            <h3 style="margin:0;">ශ්‍රමිකයින්ගේ සම්පූර්ණ ලැයිස්තුව (වාර්තා පිළිවෙළ)</h3>
-            <button type="button" class="btn-print" onclick="printActiveReport('masterTablePreview')">සම්පූර්ණ ලැයිස්තුව මුද්‍රණය (Print)</button>
+    <!-- ENTRY FORM (Admin & Officer) -->
+    <div class="section-box no-print" id="entryFormSection">
+        <h3>3. නව තොරතුරු / දරුවන්ගේ විස්තර ඇතුළත් කිරීමේ පෝරමය</h3>
+        <form id="mainWorkerForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="f_slbfe">SLBFE Registration No:</label>
+                    <input type="text" id="f_slbfe" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_name">විදේශගත පුද්ගලයාගේ නම *:</label>
+                    <input type="text" id="f_name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="f_passport">ගමන් බලපත්‍ර අංකය (Passport No) *:</label>
+                    <input type="text" id="f_passport" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="f_nic">ජාතික හැඳුනුම්පත් අංකය (NIC):</label>
+                    <input type="text" id="f_nic" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_gender">ලිංගභේදය (F / M) *:</label>
+                    <select id="f_gender" class="form-control" required>
+                        <option value="">තෝරන්න...</option>
+                        <option value="F">F (කාන්තා)</option>
+                        <option value="M">M (පිරිමි)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="f_country">රට (Country):</label>
+                    <input type="text" id="f_country" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_job">රැකියාව (Job):</label>
+                    <input type="text" id="f_job" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_depDate">පිටත්වීමේ දිනය (Depature Date):</label>
+                    <input type="date" id="f_depDate" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_regDate">ලියාපදිංචි දිනය (Register Date):</label>
+                    <input type="date" id="f_regDate" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_address">ලිපිනය (Address):</label>
+                    <input type="text" id="f_address" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_gn">GN Division:</label>
+                    <input type="text" id="f_gn" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_ds">DS Division:</label>
+                    <input type="text" id="f_ds" class="form-control" value="WELIPITIYA">
+                </div>
+                <div class="form-group">
+                    <label for="f_district">District:</label>
+                    <input type="text" id="f_district" class="form-control" value="MATARA">
+                </div>
+                <div class="form-group">
+                    <label for="f_license">License Number:</label>
+                    <input type="text" id="f_license" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_agency">Agency Name:</label>
+                    <input type="text" id="f_agency" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_nominee">Nominee Name:</label>
+                    <input type="text" id="f_nominee" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_relation">Relation:</label>
+                    <input type="text" id="f_relation" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_nomAddr">Nominee Address:</label>
+                    <input type="text" id="f_nomAddr" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="f_nomContact">Nominee Contact No:</label>
+                    <input type="text" id="f_nomContact" class="form-control">
+                </div>
+            </div>
+
+            <!-- දරුවන්ගේ විස්තර (නම, උපන් දිනය, පාසැල්, ශ්‍රේණිය, අවදානම් තත්වය) -->
+            <div class="section-box" style="background:#eff6ff; border-color:#bfdbfe; margin-top:10px;">
+                <h4>දරුවන්ගේ විස්තර (නම, උපන් දිනය, පාසැල්, ශ්‍රේණිය, අවදානම් තත්වය)</h4>
+                <div id="childrenRowsContainer"></div>
+                <button type="button" class="btn-secondary" onclick="addChildEntryRow()">+ දරුවෙකු එකතු කරන්න</button>
+            </div>
+
+            <button type="submit" style="margin-top:8px;">දත්ත සුරකින්න (Duplicate රහිතව)</button>
+        </form>
+    </div>
+
+    <!-- REPORT 3: 19-Column Master Register (Preview & Print) -->
+    <div class="section-box" id="masterRegisterSection">
+        <div class="filter-row no-print" style="justify-content:space-between;">
+            <h3 style="margin:0;">4. සම්පූර්ණ ශ්‍රමික ලේඛනය (තීරු 19)</h3>
+            <button type="button" class="btn-print" onclick="printPreviewSection('masterRegisterPreview', 'සම්පූර්ණ ශ්‍රමික ලේඛනය')">සම්පූර්ණ ලේඛනය මුද්‍රණය (Print)</button>
         </div>
-        <div id="masterTablePreview" class="report-preview-box">
-            <div style="overflow-x: auto;">
+        <div id="masterRegisterPreview" class="preview-card">
+            <div class="table-wrap">
                 <table>
                     <thead>
-                        <tr id="reportTableHead"></tr>
+                        <tr id="masterHeadRow"></tr>
                     </thead>
-                    <tbody id="workersTableBody"></tbody>
+                    <tbody id="masterBodyRows"></tbody>
                 </table>
             </div>
         </div>
@@ -271,7 +505,6 @@
 </div>
 
 <script>
-    // Firebase වින්‍යාසය
     const firebaseConfig = {
         projectId: "migrant-workers-details",
         appId: "1:726730093986:web:61725edc1d0e15ba0caefb"
@@ -283,9 +516,10 @@
     const db = firebase.firestore();
 
     window.allWorkers = [];
-    let currentPrintTargetId = null;
+    let currentRole = "OFFICER";
+    const ADMIN_PIN = "1234";
 
-    const REPORT_COLUMNS = [
+    const MASTER_COLS = [
         { label: "SLBFE Registration No", keys: ["slbfeRegNo", "SLBFE Registration No", "slbfeNo", "regNo"] },
         { label: "Name", keys: ["name", "Name", "fullName"] },
         { label: "Passport No", keys: ["passportNo", "Passport No", "passport"] },
@@ -307,282 +541,324 @@
         { label: "Nominee Contact No", keys: ["nomineeContactNo", "Nominee Contact No"] }
     ];
 
-    function normalizeGenderValue(val) {
+    function onRoleSelectChange() {
+        const chosen = document.getElementById("roleSelector").value;
+        const pinField = document.getElementById("adminPinField");
+        const pinBtn = document.getElementById("adminPinConfirmBtn");
+
+        if (chosen === "ADMIN" && currentRole !== "ADMIN") {
+            pinField.classList.remove("hidden");
+            pinBtn.classList.remove("hidden");
+            pinField.focus();
+        } else if (chosen === "OFFICER") {
+            applyRole("OFFICER");
+            pinField.classList.add("hidden");
+            pinBtn.classList.add("hidden");
+            pinField.value = "";
+        }
+    }
+
+    function confirmAdminPin() {
+        const entered = document.getElementById("adminPinField").value.trim();
+        if (entered === ADMIN_PIN) {
+            applyRole("ADMIN");
+            document.getElementById("adminPinField").classList.add("hidden");
+            document.getElementById("adminPinConfirmBtn").classList.add("hidden");
+            document.getElementById("adminPinField").value = "";
+            alert("Admin භූමිකාව සක්‍රිය කරන ලදී.");
+        } else {
+            alert("වැරදි Admin PIN අංකයකි.");
+        }
+    }
+
+    function applyRole(role) {
+        currentRole = role;
+        document.getElementById("roleSelector").value = role;
+        document.getElementById("roleBadge").innerText = role;
+
+        const adminBox = document.getElementById("adminImportBox");
+        const hint = document.getElementById("roleHint");
+
+        if (role === "ADMIN") {
+            adminBox.classList.remove("hidden");
+            hint.innerText = "Admin: Excel file Import කිරීම, සියලු දත්ත ඇතුළත් කිරීම සහ වාර්තා පාලනය සක්‍රියයි.";
+        } else {
+            adminBox.classList.add("hidden");
+            hint.innerText = "Officer: පෝරමයෙන් දත්ත ඇතුළත් කිරීමට සහ වාර්තා Preview / Print කිරීමට හැකිය.";
+        }
+    }
+
+    function normalizeGender(val) {
         if (!val) return "";
-        const g = String(val).trim().toUpperCase();
-        if (g === "F" || g.startsWith("F") || g.includes("කාන්තා") || g.includes("ස්ත්‍රී")) {
-            return "F";
-        }
-        if (g === "M" || g.startsWith("M") || g.includes("පිරිමි")) {
-            return "M";
+        const s = String(val).trim().toUpperCase();
+        if (s === "F" || s.startsWith("F") || s.includes("කාන්තා") || s.includes("ස්ත්‍රී")) return "F";
+        if (s === "M" || s.startsWith("M") || s.includes("පිරිමි")) return "M";
+        return "";
+    }
+
+    function extractGender(doc) {
+        const direct = [doc.gender, doc.Gender, doc["Gender"], doc.sex, doc.Sex, doc.E, doc.e];
+        for (const v of direct) {
+            const norm = normalizeGender(v);
+            if (norm) return norm;
         }
         return "";
     }
 
-    function getWorkerGender(data) {
-        const candidates = [
-            data.Gender, data.gender, data["Gender"], data.sex, data.Sex, data.col4, data.E, data.e
-        ];
-        for (const item of candidates) {
-            const normalized = normalizeGenderValue(item);
-            if (normalized) return normalized;
-        }
-        for (const [key, value] of Object.entries(data || {})) {
-            if (key.toLowerCase().includes("gender") || key.toLowerCase() === "sex") {
-                const normalized = normalizeGenderValue(value);
-                if (normalized) return normalized;
-            }
-        }
-        return "";
-    }
-
-    function getFieldValue(docData, possibleKeys) {
-        for (const k of possibleKeys) {
-            if (docData[k] !== undefined && docData[k] !== null && String(docData[k]).trim() !== "") {
-                return String(docData[k]).trim();
+    function getVal(doc, keys) {
+        for (const k of keys) {
+            if (doc[k] !== undefined && doc[k] !== null && String(doc[k]).trim() !== "") {
+                return String(doc[k]).trim();
             }
         }
         return "-";
     }
 
-    function parseDateSafe(val) {
-        if (!val) return null;
-        if (val.toDate) return val.toDate();
-        const d = new Date(val);
+    function normId(val) {
+        return String(val || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    }
+
+    function isDuplicateRecord(candidate) {
+        const cSlbfe = normId(candidate.slbfeRegNo || candidate["SLBFE Registration No"]);
+        const cPass = normId(candidate.passportNo || candidate.passport || candidate["Passport No"]);
+        const cNic = normId(candidate.nic || candidate["National Identifi cad No"]);
+
+        return (window.allWorkers || []).some(w => {
+            const eSlbfe = normId(w.slbfeRegNo || w["SLBFE Registration No"]);
+            const ePass = normId(w.passportNo || w.passport || w["Passport No"]);
+            const eNic = normId(w.nic || w["National Identifi cad No"]);
+
+            return (cSlbfe && eSlbfe && cSlbfe === eSlbfe) ||
+                   (cPass && ePass && cPass === ePass) ||
+                   (cNic && eNic && cNic === eNic);
+        });
+    }
+
+    function rowToWorkerObject(rawCols) {
+        const cols = rawCols.map(x => (x === undefined || x === null) ? "" : String(x).trim());
+        if (cols.every(x => x === "")) return null;
+
+        const h0 = cols[0].toLowerCase();
+        if (h0.includes("slbfe") || h0 === "registration no" || h0 === "name") return null;
+
+        const g = normalizeGender(cols[4]) || cols[4].toUpperCase();
+        return {
+            slbfeRegNo: cols[0] || "",
+            name: cols[1] || "",
+            passportNo: cols[2] || "",
+            passport: cols[2] || "",
+            nic: cols[3] || "",
+            gender: g,
+            Gender: g,
+            address: cols[5] || "",
+            gnDivision: cols[6] || "",
+            dsDivision: cols[7] || "",
+            district: cols[8] || "",
+            country: cols[9] || "",
+            job: cols[10] || "",
+            departureDate: cols[11] || "",
+            registerDate: cols[12] || "",
+            licenseNumber: cols[13] || "",
+            agencyName: cols[14] || "",
+            nomineeName: cols[15] || "",
+            relation: cols[16] || "",
+            nomineeAddress: cols[17] || "",
+            nomineeContactNo: cols[18] || "",
+            children: [],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+    }
+
+    async function persistUniqueWorkers(list) {
+        if (currentRole !== "ADMIN") {
+            alert("Excel Import කළ හැක්කේ Admin හට පමණි.");
+            return;
+        }
+
+        let added = 0;
+        let skipped = 0;
+        const seen = new Set();
+
+        for (const item of list) {
+            if (!item) continue;
+            const sKey = normId(item.slbfeRegNo);
+            const pKey = normId(item.passportNo);
+            const nKey = normId(item.nic);
+
+            const batchDup = (sKey && seen.has("S:" + sKey)) ||
+                             (pKey && seen.has("P:" + pKey)) ||
+                             (nKey && seen.has("N:" + nKey));
+
+            if (batchDup || isDuplicateRecord(item)) {
+                skipped++;
+                continue;
+            }
+
+            if (sKey) seen.add("S:" + sKey);
+            if (pKey) seen.add("P:" + pKey);
+            if (nKey) seen.add("N:" + nKey);
+
+            await db.collection("workers").add(item);
+            added++;
+        }
+
+        const box = document.getElementById("importResultBox");
+        box.classList.remove("hidden");
+        box.innerHTML = `<strong>Import සම්පූර්ණයි:</strong> අලුතින් එක් කළ වාර්තා: <strong>${added}</strong> | Duplicate බැවින් මඟහැරිය වාර්තා: <strong>${skipped}</strong>`;
+    }
+
+    function handleExcelFileImport() {
+        const input = document.getElementById("excelFile");
+        const file = input.files[0];
+        if (!file) {
+            alert("කරුණාකර Excel (.xlsx, .xls) හෝ CSV ගොනුවක් තෝරන්න.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const bytes = new Uint8Array(e.target.result);
+                const wb = XLSX.read(bytes, { type: "array" });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false });
+                const mapped = rows.map(rowToWorkerObject).filter(Boolean);
+                await persistUniqueWorkers(mapped);
+                input.value = "";
+            } catch (err) {
+                console.error(err);
+                alert("Excel ගොනුව කියවීමේදී දෝෂයක් ඇතිවිය.");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    async function handleExcelPasteImport() {
+        const text = document.getElementById("excelPasteText").value.trim();
+        if (!text) {
+            alert("කරුණාකර Excel දත්ත paste කරන්න.");
+            return;
+        }
+        const lines = text.split(/\r?\n/);
+        const mapped = lines.map(line => {
+            const cells = line.includes("\t") ? line.split("\t") : line.split(",");
+            return rowToWorkerObject(cells);
+        }).filter(Boolean);
+
+        await persistUniqueWorkers(mapped);
+        document.getElementById("excelPasteText").value = "";
+    }
+
+    function parseDateValue(v) {
+        if (!v) return null;
+        if (v.toDate) return v.toDate();
+        const d = new Date(v);
         return isNaN(d.getTime()) ? null : d;
     }
 
-    function formatDateDisplay(val) {
-        const d = parseDateSafe(val);
-        if (!d) return val ? String(val) : "-";
+    function formatIsoDate(v) {
+        const d = parseDateValue(v);
+        if (!d) return v ? String(v) : "-";
         return d.toISOString().split("T")[0];
     }
 
-    // නිශ්චිත කාලසීමාවක් තුළ කාන්තා / පුරුෂ / සමස්ත විදේශගත වාර්තාව
-    function generatePeriodGenderReport() {
-        const fromVal = document.getElementById("periodFromDate")?.value;
-        const toVal = document.getElementById("periodToDate")?.value;
-        const genderFilter = document.getElementById("periodGenderFilter")?.value || "ALL";
+    function renderPeriodGenderReport() {
+        const fromStr = document.getElementById("pgFrom")?.value;
+        const toStr = document.getElementById("pgTo")?.value;
+        const genderSel = document.getElementById("pgGender")?.value || "ALL";
 
-        const fromDate = fromVal ? new Date(fromVal + "T00:00:00") : null;
-        const toDate = toVal ? new Date(toVal + "T23:59:59") : null;
+        const fromDate = fromStr ? new Date(fromStr + "T00:00:00") : null;
+        const toDate = toStr ? new Date(toStr + "T23:59:59") : null;
 
-        let femaleCount = 0;
-        let maleCount = 0;
-        let totalCount = 0;
-        const rows = [];
+        let fCount = 0;
+        let mCount = 0;
+        let allCount = 0;
+        const htmlRows = [];
 
-        (window.allWorkers || []).forEach(worker => {
-            const rawDate = worker.departureDate || worker["Depature Date"] || worker["Departure Date"] || worker.registerDate || worker["Register Date"] || worker.createdAt;
-            const refDate = parseDateSafe(rawDate);
+        (window.allWorkers || []).forEach(w => {
+            const rawDt = w.departureDate || w["Depature Date"] || w["Departure Date"] || w.registerDate || w["Register Date"] || w.createdAt;
+            const dt = parseDateValue(rawDt);
 
-            const inDateRange =
-                (!fromDate && !toDate) ||
-                (refDate && (!fromDate || refDate >= fromDate) && (!toDate || refDate <= toDate));
+            const matchesRange = (!fromDate && !toDate) || (dt && (!fromDate || dt >= fromDate) && (!toDate || dt <= toDate));
+            if (!matchesRange) return;
 
-            if (!inDateRange) return;
+            const g = extractGender(w);
+            if (g === "F") fCount++;
+            else if (g === "M") mCount++;
+            allCount++;
 
-            const g = getWorkerGender(worker);
-            if (g === "F") femaleCount++;
-            else if (g === "M") maleCount++;
-            totalCount++;
+            if (genderSel !== "ALL" && g !== genderSel) return;
 
-            if (genderFilter !== "ALL" && g !== genderFilter) return;
-
-            const name = getFieldValue(worker, ["name", "Name", "fullName"]);
-            const nic = getFieldValue(worker, ["nic", "National Identifi cad No", "National Identity Card No", "idNo"]);
-            const passport = getFieldValue(worker, ["passportNo", "Passport No", "passport"]);
-            const country = getFieldValue(worker, ["country", "Country"]);
-            const dateText = formatDateDisplay(rawDate);
-
-            rows.push(`
+            htmlRows.push(`
                 <tr>
-                    <td>${rows.length + 1}</td>
-                    <td>${name}</td>
+                    <td>${htmlRows.length + 1}</td>
+                    <td>${getVal(w, ["name", "Name", "fullName"])}</td>
                     <td><strong>${g || "-"}</strong></td>
-                    <td>${nic}</td>
-                    <td>${passport}</td>
-                    <td>${country}</td>
-                    <td>${dateText}</td>
+                    <td>${getVal(w, ["nic", "National Identifi cad No", "National Identity Card No", "idNo"])}</td>
+                    <td>${getVal(w, ["passportNo", "Passport No", "passport"])}</td>
+                    <td>${getVal(w, ["country", "Country"])}</td>
+                    <td>${formatIsoDate(rawDt)}</td>
                 </tr>
             `);
         });
 
-        const rangeLabel = (fromVal || toVal)
-            ? `කාලසීමාව: ${fromVal || "ආරම්භයේ සිට"} සිට ${toVal || "අද දක්වා"}`
-            : "සියලු දින (All Dates)";
+        const periodText = (fromStr || toStr)
+            ? `කාලසීමාව: ${fromStr || "ආරම්භයේ සිට"} සිට ${toStr || "අද දක්වා"}`
+            : "සියලු දින";
 
-        const titleEl = document.getElementById("periodReportTitle");
-        if (titleEl) {
-            titleEl.innerText = `විදේශගත වූ කාන්තා, පුරුෂ සහ සමස්ත වාර්තාව — ${rangeLabel}`;
-        }
+        document.getElementById("pgHeading").innerText = `කාලසීමාව අනුව විදේශගත වූ පිරිසගේ වාර්තාව — ${periodText}`;
+        document.getElementById("pgFemaleTotal").innerText = fCount;
+        document.getElementById("pgMaleTotal").innerText = mCount;
+        document.getElementById("pgGrandTotal").innerText = allCount;
 
-        document.getElementById("periodFemaleCount").innerText = femaleCount;
-        document.getElementById("periodMaleCount").innerText = maleCount;
-        document.getElementById("periodTotalCount").innerText = totalCount;
-
-        const tbody = document.getElementById("periodGenderReportBody");
-        tbody.innerHTML = rows.length
-            ? rows.join("")
+        document.getElementById("pgTableBody").innerHTML = htmlRows.length
+            ? htmlRows.join("")
             : `<tr><td colspan="7" style="text-align:center;">තෝරාගත් කාලසීමාවට අදාළ වාර්තා හමු නොවීය.</td></tr>`;
     }
 
     function resetPeriodGenderReport() {
-        document.getElementById("periodFromDate").value = "";
-        document.getElementById("periodToDate").value = "";
-        document.getElementById("periodGenderFilter").value = "ALL";
-        generatePeriodGenderReport();
+        document.getElementById("pgFrom").value = "";
+        document.getElementById("pgTo").value = "";
+        document.getElementById("pgGender").value = "ALL";
+        renderPeriodGenderReport();
     }
 
-    // ඕනෑම වාර්තාවක් Preview / Print කිරීම
-    function printActiveReport(targetBoxId) {
-        const targetEl = document.getElementById(targetBoxId);
-        if (!targetEl) {
-            window.print();
-            return;
-        }
+    function renderChildRiskReport() {
+        const fromStr = document.getElementById("crFrom")?.value;
+        const toStr = document.getElementById("crTo")?.value;
+        const riskSel = document.getElementById("crRisk")?.value || "ALL";
 
-        const printWindow = window.open("", "_blank", "width=1000,height=700");
-        if (!printWindow) {
-            window.print();
-            return;
-        }
-
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html lang="si">
-            <head>
-                <meta charset="UTF-8">
-                <title>වාර්තාව මුද්‍රණය - වැලිපිටිය ප්‍රාදේශීය ලේකම් කාර්යාලය</title>
-                <style>
-                    body { font-family: 'Iskoola Pota', sans-serif; padding: 20px; color: #1a202c; }
-                    h2, h4 { margin-top: 0; color: #1a365d; }
-                    .summary-strip { display: flex; gap: 15px; margin: 12px 0 18px 0; }
-                    .summary-box { border: 1px solid #cbd5e0; padding: 10px 14px; border-radius: 6px; background: #f7fafc; flex: 1; }
-                    .summary-box span { display: block; font-size: 12px; color: #4a5568; }
-                    .summary-box strong { font-size: 20px; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                    th, td { border: 1px solid #4a5568; padding: 6px 8px; text-align: left; font-size: 12px; }
-                    th { background: #edf2f7; }
-                </style>
-            </head>
-            <body>
-                <h2>විදේශ ගත ශ්‍රමික තොරතුරු පද්ධතිය - වැලිපිටිය ප්‍රාදේශීය ලේකම් කාර්යාලය</h2>
-                ${targetEl.innerHTML}
-                <script>
-                    window.onload = function() {
-                        window.print();
-                    };
-                <\/script>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
-    }
-
-    function renderReportTable(workersList) {
-        const theadRow = document.getElementById("reportTableHead");
-        const tbody = document.getElementById("workersTableBody");
-
-        if (theadRow) {
-            theadRow.innerHTML = REPORT_COLUMNS.map(col => `<th>${col.label}</th>`).join("");
-        }
-        if (!tbody) return;
-
-        tbody.innerHTML = workersList.map(worker => {
-            const cells = REPORT_COLUMNS.map(col => {
-                let val = getFieldValue(worker, col.keys);
-                if (col.label === "Gender") {
-                    const normalized = getWorkerGender(worker);
-                    if (normalized) val = normalized;
-                }
-                return `<td>${val}</td>`;
-            }).join("");
-            return `<tr>${cells}</tr>`;
-        }).join("");
-    }
-
-    function addChildRow(child = {}) {
-        const container = document.getElementById("childrenContainer");
-        const rowId = "child_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
-
-        const div = document.createElement("div");
-        div.className = "child-row";
-        div.id = rowId;
-        div.innerHTML = `
-            <input type="text" placeholder="දරුවාගේ නම" class="form-control child-name" style="flex:1; min-width:160px;" value="${child.childName || ""}" required>
-            <input type="date" title="උපන් දිනය" class="form-control child-dob" style="width:155px;" value="${child.dob || ""}">
-            <input type="text" placeholder="පාසැල්" class="form-control child-school" style="flex:1; min-width:150px;" value="${child.school || ""}">
-            <input type="text" placeholder="ශ්‍රේණිය" class="form-control child-grade" style="width:110px;" value="${child.grade || ""}">
-            <select class="form-control child-risk" style="width:180px;">
-                <option value="සාමාන්‍ය" ${child.riskStatus === "සාමාන්‍ය" ? "selected" : ""}>සාමාන්‍ය</option>
-                <option value="මධ්‍යස්ථ අවදානම්" ${child.riskStatus === "මධ්‍යස්ථ අවදානම්" ? "selected" : ""}>මධ්‍යස්ථ අවදානම්</option>
-                <option value="ඉහළ අවදානම්" ${child.riskStatus === "ඉහළ අවදානම්" ? "selected" : ""}>ඉහළ අවදානම්</option>
-            </select>
-            <button type="button" class="btn-danger" onclick="document.getElementById('${rowId}').remove()">ඉවත් කරන්න</button>
-        `;
-        container.appendChild(div);
-    }
-
-    function collectChildrenData() {
-        const children = [];
-        document.querySelectorAll("#childrenContainer .child-row").forEach(row => {
-            const childName = row.querySelector(".child-name")?.value.trim() || "";
-            const dob = row.querySelector(".child-dob")?.value.trim() || "";
-            const school = row.querySelector(".child-school")?.value.trim() || "";
-            const grade = row.querySelector(".child-grade")?.value.trim() || "";
-            const riskStatus = row.querySelector(".child-risk")?.value.trim() || "සාමාන්‍ය";
-
-            if (childName || dob || school || grade) {
-                children.push({ childName, dob, school, grade, riskStatus });
-            }
-        });
-        return children;
-    }
-
-    function generateChildPeriodReport() {
-        const fromVal = document.getElementById("reportFromDate")?.value;
-        const toVal = document.getElementById("reportToDate")?.value;
-        const riskFilter = document.getElementById("reportRiskFilter")?.value || "ALL";
-
-        const fromDate = fromVal ? new Date(fromVal + "T00:00:00") : null;
-        const toDate = toVal ? new Date(toVal + "T23:59:59") : null;
-
-        const tbody = document.getElementById("childPeriodReportBody");
-        if (!tbody) return;
+        const fromDate = fromStr ? new Date(fromStr + "T00:00:00") : null;
+        const toDate = toStr ? new Date(toStr + "T23:59:59") : null;
 
         const rows = [];
 
-        (window.allWorkers || []).forEach(worker => {
-            const workerName = getFieldValue(worker, ["name", "Name", "fullName"]);
-            const nic = getFieldValue(worker, ["nic", "National Identifi cad No", "National Identity Card No", "idNo"]);
-            const passport = getFieldValue(worker, ["passportNo", "Passport No", "passport"]);
+        (window.allWorkers || []).forEach(w => {
+            const rawDt = w.registerDate || w["Register Date"] || w.departureDate || w["Depature Date"] || w.createdAt;
+            const dt = parseDateValue(rawDt);
 
-            const refDate = parseDateSafe(
-                worker.registerDate || worker["Register Date"] || worker.departureDate || worker["Depature Date"] || worker.createdAt
-            );
+            const matchesRange = (!fromDate && !toDate) || (dt && (!fromDate || dt >= fromDate) && (!toDate || dt <= toDate));
+            if (!matchesRange) return;
 
-            const inDateRange =
-                (!fromDate && !toDate) ||
-                (refDate && (!fromDate || refDate >= fromDate) && (!toDate || refDate <= toDate));
+            const wName = getVal(w, ["name", "Name", "fullName"]);
+            const wNic = getVal(w, ["nic", "National Identifi cad No", "National Identity Card No", "idNo"]);
+            const wPass = getVal(w, ["passportNo", "Passport No", "passport"]);
 
-            if (!inDateRange) return;
+            const children = Array.isArray(w.children) ? w.children : [];
+            children.forEach(ch => {
+                const cName = ch.childName || ch.name || "-";
+                const cDob = ch.dob || "-";
+                const cSchool = ch.school || "-";
+                const cGrade = ch.grade || "-";
+                const cRisk = ch.riskStatus || ch.risk || "සාමාන්‍ය";
 
-            const children = Array.isArray(worker.children) ? worker.children : [];
-            children.forEach(child => {
-                const cName = child.childName || child.name || "-";
-                const cDob = child.dob || "-";
-                const cSchool = child.school || "-";
-                const cGrade = child.grade || "-";
-                const cRisk = child.riskStatus || child.risk || "සාමාන්‍ය";
-
-                if (riskFilter !== "ALL" && cRisk !== riskFilter) return;
+                if (riskSel !== "ALL" && cRisk !== riskSel) return;
 
                 rows.push(`
                     <tr>
-                        <td>${workerName}</td>
-                        <td>${nic}</td>
-                        <td>${passport}</td>
+                        <td>${wName}</td>
+                        <td>${wNic}</td>
+                        <td>${wPass}</td>
                         <td>${cName}</td>
                         <td>${cDob}</td>
                         <td>${cSchool}</td>
@@ -593,89 +869,209 @@
             });
         });
 
-        tbody.innerHTML = rows.length
+        document.getElementById("crTableBody").innerHTML = rows.length
             ? rows.join("")
-            : `<tr><td colspan="8" style="text-align:center;">තෝරාගත් කාල සීමාවට හෝ පෙරහනට අදාළ දරුවන්ගේ වාර්තා හමු නොවීය.</td></tr>`;
+            : `<tr><td colspan="8" style="text-align:center;">තෝරාගත් කාලසීමාවට හෝ අවදානම් මට්ටමට අදාළ දරුවන්ගේ වාර්තා හමු නොවීය.</td></tr>`;
     }
 
-    function resetChildPeriodReport() {
-        document.getElementById("reportFromDate").value = "";
-        document.getElementById("reportToDate").value = "";
-        document.getElementById("reportRiskFilter").value = "ALL";
-        generateChildPeriodReport();
+    function resetChildRiskReport() {
+        document.getElementById("crFrom").value = "";
+        document.getElementById("crTo").value = "";
+        document.getElementById("crRisk").value = "ALL";
+        renderChildRiskReport();
     }
 
-    function loadDashboardStats() {
-        db.collection("workers").onSnapshot((snapshot) => {
+    function renderMasterRegister(workers) {
+        const headEl = document.getElementById("masterHeadRow");
+        const bodyEl = document.getElementById("masterBodyRows");
+
+        headEl.innerHTML = MASTER_COLS.map(col => `<th>${col.label}</th>`).join("");
+        bodyEl.innerHTML = workers.map(w => {
+            const tds = MASTER_COLS.map(col => {
+                let val = getVal(w, col.keys);
+                if (col.label === "Gender") {
+                    const g = extractGender(w);
+                    if (g) val = g;
+                }
+                return `<td>${val}</td>`;
+            }).join("");
+            return `<tr>${tds}</tr>`;
+        }).join("");
+    }
+
+    function printPreviewSection(elementId, reportTitle) {
+        const target = document.getElementById(elementId);
+        if (!target) {
+            window.print();
+            return;
+        }
+        const win = window.open("", "_blank", "width=1050,height=720");
+        if (!win) {
+            window.print();
+            return;
+        }
+        win.document.write(`
+            <!DOCTYPE html>
+            <html lang="si">
+            <head>
+                <meta charset="UTF-8">
+                <title>${reportTitle}</title>
+                <style>
+                    body { font-family: 'Iskoola Pota', sans-serif; padding: 20px; color: #0f172a; }
+                    h2, h4 { color: #1e3a8a; margin-top: 0; }
+                    .summary-grid { display: flex; gap: 14px; margin: 12px 0 16px 0; }
+                    .summary-item { flex: 1; border: 1px solid #cbd5e1; padding: 10px 12px; border-radius: 6px; background: #f8fafc; }
+                    .summary-item span { display: block; font-size: 12px; color: #475569; }
+                    .summary-item strong { font-size: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+                    th, td { border: 1px solid #475569; padding: 6px 8px; text-align: left; font-size: 12px; }
+                    th { background: #e2e8f0; }
+                </style>
+            </head>
+            <body>
+                <h2>විදේශ ගත ශ්‍රමික තොරතුරු පද්ධතිය - වැලිපිටිය ප්‍රාදේශීය ලේකම් කාර්යාලය</h2>
+                ${target.innerHTML}
+                <script>window.onload = function() { window.print(); };<\/script>
+            </body>
+            </html>
+        `);
+        win.document.close();
+    }
+
+    function addChildEntryRow(child = {}) {
+        const container = document.getElementById("childrenRowsContainer");
+        const id = "ch_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+
+        const row = document.createElement("div");
+        row.className = "child-row";
+        row.id = id;
+        row.innerHTML = `
+            <input type="text" placeholder="දරුවාගේ නම" class="form-control c-name" style="flex:1; min-width:155px;" value="${child.childName || ""}" required>
+            <input type="date" title="උපන් දිනය" class="form-control c-dob" style="width:155px;" value="${child.dob || ""}">
+            <input type="text" placeholder="පාසැල්" class="form-control c-school" style="flex:1; min-width:150px;" value="${child.school || ""}">
+            <input type="text" placeholder="ශ්‍රේණිය" class="form-control c-grade" style="width:105px;" value="${child.grade || ""}">
+            <select class="form-control c-risk" style="width:175px;">
+                <option value="සාමාන්‍ය" ${child.riskStatus === "සාමාන්‍ය" ? "selected" : ""}>සාමාන්‍ය</option>
+                <option value="මධ්‍යස්ථ අවදානම්" ${child.riskStatus === "මධ්‍යස්ථ අවදානම්" ? "selected" : ""}>මධ්‍යස්ථ අවදානම්</option>
+                <option value="ඉහළ අවදානම්" ${child.riskStatus === "ඉහළ අවදානම්" ? "selected" : ""}>ඉහළ අවදානම්</option>
+            </select>
+            <button type="button" class="btn-danger" onclick="document.getElementById('${id}').remove()">ඉවත් කරන්න</button>
+        `;
+        container.appendChild(row);
+    }
+
+    function readChildrenFromForm() {
+        const list = [];
+        document.querySelectorAll("#childrenRowsContainer .child-row").forEach(r => {
+            const childName = r.querySelector(".c-name")?.value.trim() || "";
+            const dob = r.querySelector(".c-dob")?.value.trim() || "";
+            const school = r.querySelector(".c-school")?.value.trim() || "";
+            const grade = r.querySelector(".c-grade")?.value.trim() || "";
+            const riskStatus = r.querySelector(".c-risk")?.value.trim() || "සාමාන්‍ය";
+
+            if (childName || dob || school || grade) {
+                list.push({ childName, dob, school, grade, riskStatus });
+            }
+        });
+        return list;
+    }
+
+    function startRealtimeSync() {
+        db.collection("workers").onSnapshot((snap) => {
             let total = 0;
             let female = 0;
             let male = 0;
-            let risk = 0;
-            const workersList = [];
+            let riskCount = 0;
+            const records = [];
 
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                workersList.push(data);
+            snap.forEach(doc => {
+                const d = doc.data();
+                records.push(d);
                 total++;
 
-                const gender = getWorkerGender(data);
-                if (gender === "F") female++;
-                else if (gender === "M") male++;
+                const g = extractGender(d);
+                if (g === "F") female++;
+                else if (g === "M") male++;
 
-                const hasHighRiskChild = Array.isArray(data.children) &&
-                    data.children.some(c => (c.riskStatus || "").includes("අවදානම්") && !(c.riskStatus || "").includes("සාමාන්‍ය"));
+                const hasRiskChild = Array.isArray(d.children) &&
+                    d.children.some(c => (c.riskStatus || "").includes("අවදානම්") && !(c.riskStatus || "").includes("සාමාන්‍ය"));
 
-                if (data.isRiskFamily || data.riskLevel === "High" || hasHighRiskChild) {
-                    risk++;
+                if (d.isRiskFamily || d.riskLevel === "High" || hasRiskChild) {
+                    riskCount++;
                 }
             });
 
-            window.allWorkers = workersList;
+            window.allWorkers = records;
+            document.getElementById("syncStatus").innerText = "Live Sync සක්‍රියයි";
+            document.getElementById("statTotal").innerText = total;
+            document.getElementById("statFemale").innerText = female;
+            document.getElementById("statMale").innerText = male;
+            document.getElementById("statRisk").innerText = riskCount;
 
-            document.getElementById("total-workers").innerText = total;
-            document.getElementById("female-count").innerText = female;
-            document.getElementById("male-count").innerText = male;
-            document.getElementById("risk-count").innerText = risk;
-
-            renderReportTable(workersList);
-            generateChildPeriodReport();
-            generatePeriodGenderReport();
+            renderPeriodGenderReport();
+            renderChildRiskReport();
+            renderMasterRegister(records);
+        }, (err) => {
+            console.error(err);
+            document.getElementById("syncStatus").innerText = "සම්බන්ධතා දෝෂයකි";
         });
     }
 
-    document.getElementById("workerForm").addEventListener("submit", (e) => {
+    document.getElementById("mainWorkerForm").addEventListener("submit", (e) => {
         e.preventDefault();
 
-        const children = collectChildrenData();
-        const depDate = document.getElementById("departureDate").value;
+        const depDate = document.getElementById("f_depDate").value;
+        const regDate = document.getElementById("f_regDate").value || depDate;
+        const gVal = document.getElementById("f_gender").value.toUpperCase();
 
-        const workerData = {
-            name: document.getElementById("name").value.trim(),
-            gender: document.getElementById("gender").value.toUpperCase(),
-            nic: document.getElementById("nic").value.trim(),
-            passportNo: document.getElementById("passport").value.trim(),
-            passport: document.getElementById("passport").value.trim(),
-            country: document.getElementById("country").value.trim(),
+        const payload = {
+            slbfeRegNo: document.getElementById("f_slbfe").value.trim(),
+            name: document.getElementById("f_name").value.trim(),
+            passportNo: document.getElementById("f_passport").value.trim(),
+            passport: document.getElementById("f_passport").value.trim(),
+            nic: document.getElementById("f_nic").value.trim(),
+            gender: gVal,
+            Gender: gVal,
+            country: document.getElementById("f_country").value.trim(),
+            job: document.getElementById("f_job").value.trim(),
             departureDate: depDate,
-            registerDate: depDate,
-            children: children,
+            registerDate: regDate,
+            address: document.getElementById("f_address").value.trim(),
+            gnDivision: document.getElementById("f_gn").value.trim(),
+            dsDivision: document.getElementById("f_ds").value.trim(),
+            district: document.getElementById("f_district").value.trim(),
+            licenseNumber: document.getElementById("f_license").value.trim(),
+            agencyName: document.getElementById("f_agency").value.trim(),
+            nomineeName: document.getElementById("f_nominee").value.trim(),
+            relation: document.getElementById("f_relation").value.trim(),
+            nomineeAddress: document.getElementById("f_nomAddr").value.trim(),
+            nomineeContactNo: document.getElementById("f_nomContact").value.trim(),
+            children: readChildrenFromForm(),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        db.collection("workers").add(workerData)
+        if (isDuplicateRecord(payload)) {
+            alert("මෙම SLBFE අංකය / ගමන් බලපත්‍ර අංකය / NIC අංකය සහිත වාර්තාවක් දැනටමත් පවතී (Duplicate වාර්තාවකි).");
+            return;
+        }
+
+        db.collection("workers").add(payload)
             .then(() => {
-                alert("ශ්‍රමිකයාගේ දත්ත සාර්ථකව එකතු කරන ලදී!");
-                document.getElementById("workerForm").reset();
-                document.getElementById("childrenContainer").innerHTML = "";
+                alert("තොරතුරු සාර්ථකව සුරකින ලදී.");
+                document.getElementById("mainWorkerForm").reset();
+                document.getElementById("f_ds").value = "WELIPITIYA";
+                document.getElementById("f_district").value = "MATARA";
+                document.getElementById("childrenRowsContainer").innerHTML = "";
             })
-            .catch((error) => {
-                console.error("දෝෂයක් ඇතිවිය: ", error);
-                alert("දත්ත ඇතුළත් කිරීමේදී දෝෂයක් ඇතිවිය.");
+            .catch((err) => {
+                console.error(err);
+                alert("දත්ත සුරැකීමේදී දෝෂයක් ඇතිවිය.");
             });
     });
 
     window.onload = function() {
-        loadDashboardStats();
+        applyRole("OFFICER");
+        startRealtimeSync();
     };
 </script>
 
