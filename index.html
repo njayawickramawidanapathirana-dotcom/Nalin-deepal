@@ -20,6 +20,7 @@
             --border: #cbd5e1;
             --success: #15803d;
             --danger: #dc2626;
+            --warning: #b45309;
         }
         body {
             font-family: 'Iskoola Pota', sans-serif;
@@ -130,6 +131,8 @@
         .btn-danger:hover { background: #b91c1c; }
         .btn-print { background: var(--success); }
         .btn-print:hover { background: #166534; }
+        .btn-warning { background: var(--warning); }
+        .btn-warning:hover { background: #92400e; }
         .filter-row {
             display: flex;
             flex-wrap: wrap;
@@ -187,6 +190,19 @@
             color: #0c4a6e;
             font-size: 14px;
         }
+        .autofill-banner {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
         .hidden { display: none !important; }
 
         @media print {
@@ -204,7 +220,7 @@
     <div class="header-bar">
         <div>
             <h2>විදේශ ගත ශ්‍රමික තොරතුරු පද්ධතිය</h2>
-            <div style="font-size:14px; color:#475569;">වැලිපිටිය ප්‍රාදේශීය ලේකම් කාර්යාලය — කණ්ඩායම් දත්ත හා වාර්තා පද්ධතිය</div>
+            <div style="font-size:14px; color:#475569;">වැලිපිටිය ප්‍රාදේශීය ලේකම් කාර්යාලය — කණ්ඩායම් දත්ත, පසු විපරම් හා වාර්තා පද්ධතිය</div>
         </div>
         <div id="syncStatus" class="badge" style="background:#0f766e;">Firestore සම්බන්ධ වෙමින් පවතී...</div>
     </div>
@@ -215,7 +231,7 @@
             <span>වත්මන් භූමිකාව: </span>
             <span id="roleBadge" class="badge">OFFICER</span>
             <span id="roleHint" style="margin-left:8px; font-size:13px; color:#334155;">
-                Officer: පෝරමයෙන් දත්ත ඇතුළත් කිරීමට සහ වාර්තා Preview / Print කිරීමට හැකිය.
+                Officer: දත්ත යාවත්කාලීන කිරීමට, පසු විපරම් ඇතුළත් කිරීමට සහ වාර්තා බැලීමට හැකිය.
             </span>
         </div>
         <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
@@ -249,7 +265,7 @@
         </div>
     </div>
 
-    <!-- ADMIN ONLY: Excel / CSV Import (Duplicate Protected) -->
+    <!-- ADMIN ONLY: Excel / CSV Import -->
     <div class="section-box no-print hidden" id="adminImportBox" style="background:#f0f9ff; border-color:#7dd3fc;">
         <h3>Excel / CSV ගොනුවෙන් දත්ත Import කිරීම (Admin පමණි)</h3>
         <p style="font-size:13px; color:#334155; margin-top:0;">
@@ -270,7 +286,7 @@
         <div id="importResultBox" class="status-box hidden"></div>
     </div>
 
-    <!-- REPORT 1: Period Gender & Total Report (Preview & Print) -->
+    <!-- REPORT 1: Period Gender & Total Report -->
     <div class="section-box" id="periodGenderSection">
         <div class="filter-row no-print" style="justify-content:space-between;">
             <h3 style="margin:0;">1. කාලසීමාව අනුව විදේශගත වූ කාන්තා, පුරුෂ සහ සමස්ත වාර්තාව</h3>
@@ -335,7 +351,7 @@
         </div>
     </div>
 
-    <!-- REPORT 2: Period Children & Risk Status Report (Preview & Print) -->
+    <!-- REPORT 2: Period Children & Risk Status Report -->
     <div class="section-box" id="childRiskSection">
         <div class="filter-row no-print" style="justify-content:space-between;">
             <h3 style="margin:0;">2. කාලසීමාව අනුව දරුවන්ගේ විස්තර හා අවදානම් තත්වයේ වාර්තාව</h3>
@@ -387,26 +403,39 @@
         </div>
     </div>
 
-    <!-- ENTRY FORM (Admin & Officer) -->
+    <!-- SECTION 3: ENTRY & AUTO-FILL FORM (Admin & Officer) -->
     <div class="section-box no-print" id="entryFormSection">
-        <h3>3. නව තොරතුරු / දරුවන්ගේ විස්තර ඇතුළත් කිරීමේ පෝරමය</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+            <h3 style="margin:0;">3. ශ්‍රමික තොරතුරු ඇතුළත් කිරීම / යාවත්කාලීන කිරීම (Auto-Fill)</h3>
+            <button type="button" class="btn-secondary" onclick="resetEntryForm()">පෝරමය හිස් කරන්න (Clear Form)</button>
+        </div>
+        <p style="font-size:13px; color:#475569; margin-top:0;">
+            * <strong>SLBFE අංකය</strong>, <strong>ගමන් බලපත්‍ර අංකය</strong> හෝ <strong>NIC අංකය</strong> ටයිප් කළ විට, එම පුද්ගලයා දැනටමත් දත්ත ගොනුවේ සිටී නම් තොරතුරු ස්වයංක්‍රීයව පිරවේ (Auto-Fill).
+        </p>
+
+        <div id="autoFillBanner" class="autofill-banner hidden">
+            <span id="autoFillText">පවතින වාර්තාවක් හමුවිය! තොරතුරු ස්වයංක්‍රීයව පුරවා ඇත.</span>
+            <button type="button" class="btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="resetEntryForm()">නව වාර්තාවක් ලෙස අරඹන්න</button>
+        </div>
+
         <form id="mainWorkerForm">
+            <input type="hidden" id="editingDocId" value="">
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="f_slbfe">SLBFE Registration No:</label>
-                    <input type="text" id="f_slbfe" class="form-control">
+                    <label for="f_slbfe">SLBFE Registration No (සෙවීමට ටයිප් කරන්න):</label>
+                    <input type="text" id="f_slbfe" class="form-control" oninput="checkAndAutoFill('slbfe')">
+                </div>
+                <div class="form-group">
+                    <label for="f_passport">ගමන් බලපත්‍ර අංකය (Passport No) *:</label>
+                    <input type="text" id="f_passport" class="form-control" required oninput="checkAndAutoFill('passport')">
+                </div>
+                <div class="form-group">
+                    <label for="f_nic">ජාතික හැඳුනුම්පත් අංකය (NIC):</label>
+                    <input type="text" id="f_nic" class="form-control" oninput="checkAndAutoFill('nic')">
                 </div>
                 <div class="form-group">
                     <label for="f_name">විදේශගත පුද්ගලයාගේ නම *:</label>
                     <input type="text" id="f_name" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="f_passport">ගමන් බලපත්‍ර අංකය (Passport No) *:</label>
-                    <input type="text" id="f_passport" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="f_nic">ජාතික හැඳුනුම්පත් අංකය (NIC):</label>
-                    <input type="text" id="f_nic" class="form-control">
                 </div>
                 <div class="form-group">
                     <label for="f_gender">ලිංගභේදය (F / M) *:</label>
@@ -474,21 +503,101 @@
                 </div>
             </div>
 
-            <!-- දරුවන්ගේ විස්තර (නම, උපන් දිනය, පාසැල්, ශ්‍රේණිය, අවදානම් තත්වය) -->
+            <!-- දරුවන්ගේ විස්තර -->
             <div class="section-box" style="background:#eff6ff; border-color:#bfdbfe; margin-top:10px;">
                 <h4>දරුවන්ගේ විස්තර (නම, උපන් දිනය, පාසැල්, ශ්‍රේණිය, අවදානම් තත්වය)</h4>
                 <div id="childrenRowsContainer"></div>
                 <button type="button" class="btn-secondary" onclick="addChildEntryRow()">+ දරුවෙකු එකතු කරන්න</button>
             </div>
 
-            <button type="submit" style="margin-top:8px;">දත්ත සුරකින්න (Duplicate රහිතව)</button>
+            <button type="submit" id="submitWorkerBtn" style="margin-top:8px;">නව දත්ත සුරකින්න</button>
         </form>
     </div>
 
-    <!-- REPORT 3: 19-Column Master Register (Preview & Print) -->
+    <!-- SECTION 4: FOLLOW-UP FORM & LOGS (පසු විපරම් පෝරමය) -->
+    <div class="section-box" id="followUpSection" style="background:#fffbeb; border-color:#fde68a;">
+        <div class="filter-row no-print" style="justify-content:space-between;">
+            <h3 style="margin:0; color:#92400e;">4. පසු විපරම් (Follow-up) තොරතුරු ඇතුළත් කිරීම සහ ඉතිහාසය</h3>
+            <button type="button" class="btn-print" onclick="printPreviewSection('followUpPreview', 'පසු විපරම් වාර්තාව')">පසු විපරම් වාර්තාව මුද්‍රණය (Print)</button>
+        </div>
+
+        <form id="followUpForm" class="no-print" style="margin-bottom:16px;">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="fu_searchId">ශ්‍රමිකයා සොයන්න (Passport / NIC / SLBFE අංකය) *:</label>
+                    <input type="text" id="fu_searchId" class="form-control" placeholder="අංකය ටයිප් කරන්න..." required oninput="lookupWorkerForFollowUp()">
+                </div>
+                <div class="form-group">
+                    <label for="fu_workerName">විදේශගත පුද්ගලයාගේ නම:</label>
+                    <input type="text" id="fu_workerName" class="form-control" readonly style="background:#f1f5f9;" placeholder="ස්වයංක්‍රීයව පිරවේ...">
+                </div>
+                <div class="form-group">
+                    <label for="fu_date">පසු විපරම් කළ දිනය *:</label>
+                    <input type="date" id="fu_date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="fu_method">පසු විපරම් ක්‍රමය:</label>
+                    <select id="fu_method" class="form-control">
+                        <option value="නිවසට පැමිණීම (Home Visit)">නිවසට පැමිණීම (Home Visit)</option>
+                        <option value="දුරකථන ඇමතුමක් (Phone Call)">දුරකථන ඇමතුමක් (Phone Call)</option>
+                        <option value="කාර්යාලයට කැඳවීම (Office Visit)">කාර්යාලයට කැඳවීම (Office Visit)</option>
+                        <option value="පාසල හරහා (School Visit)">පාසල හරහා (School Visit)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fu_status">පවුලේ / දරුවන්ගේ වත්මන් තත්වය:</label>
+                    <select id="fu_status" class="form-control">
+                        <option value="සතුටුදායකයි / සාමාන්‍යයි">සතුටුදායකයි / සාමාන්‍යයි</option>
+                        <option value="අධ්‍යාපන ගැටලු ඇත">අධ්‍යාපන ගැටලු ඇත</option>
+                        <option value="රැකවරණ / සෞඛ්‍ය ගැටලු ඇත">රැකවරණ / සෞඛ්‍ය ගැටලු ඇත</option>
+                        <option value="විශේෂ මැදිහත්වීමක් අවශ්‍යයි">විශේෂ මැදිහත්වීමක් අවශ්‍යයි</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fu_nextDate">මීළඟ පසු විපරම් දිනය:</label>
+                    <input type="date" id="fu_nextDate" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="fu_officer">නිලධාරියාගේ නම (Officer Name):</label>
+                    <input type="text" id="fu_officer" class="form-control" placeholder="නිලධාරියාගේ නම">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="fu_notes">නිරීක්ෂණ සහ ලබා දුන් උපදෙස් / පියවර *:</label>
+                <textarea id="fu_notes" rows="2" class="form-control" placeholder="පසු විපරම් විස්තර මෙහි සටහන් කරන්න..." required></textarea>
+            </div>
+            <button type="submit" class="btn-warning">පසු විපරම් සටහන සුරකින්න</button>
+        </form>
+
+        <!-- Follow-up History Table -->
+        <div id="followUpPreview" class="preview-card">
+            <h4>පසු විපරම් වාර්තා ඉතිහාසය</h4>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>දිනය</th>
+                            <th>ශ්‍රමිකයාගේ නම</th>
+                            <th>Passport / NIC</th>
+                            <th>ක්‍රමය</th>
+                            <th>වත්මන් තත්වය</th>
+                            <th>නිරීක්ෂණ සහ පියවර</th>
+                            <th>මීළඟ දිනය</th>
+                            <th>නිලධාරියා</th>
+                        </tr>
+                    </thead>
+                    <tbody id="followUpTableBody">
+                        <tr><td colspan="8" style="text-align:center;">පසු විපරම් වාර්තා පූරණය වෙමින් පවතී...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT 5: 19-Column Master Register -->
     <div class="section-box" id="masterRegisterSection">
         <div class="filter-row no-print" style="justify-content:space-between;">
-            <h3 style="margin:0;">4. සම්පූර්ණ ශ්‍රමික ලේඛනය (තීරු 19)</h3>
+            <h3 style="margin:0;">5. සම්පූර්ණ ශ්‍රමික ලේඛනය (තීරු 19)</h3>
             <button type="button" class="btn-print" onclick="printPreviewSection('masterRegisterPreview', 'සම්පූර්ණ ශ්‍රමික ලේඛනය')">සම්පූර්ණ ලේඛනය මුද්‍රණය (Print)</button>
         </div>
         <div id="masterRegisterPreview" class="preview-card">
@@ -516,6 +625,7 @@
     const db = firebase.firestore();
 
     window.allWorkers = [];
+    window.allFollowUps = [];
     let currentRole = "OFFICER";
     const ADMIN_PIN = "1234";
 
@@ -584,7 +694,7 @@
             hint.innerText = "Admin: Excel file Import කිරීම, සියලු දත්ත ඇතුළත් කිරීම සහ වාර්තා පාලනය සක්‍රියයි.";
         } else {
             adminBox.classList.add("hidden");
-            hint.innerText = "Officer: පෝරමයෙන් දත්ත ඇතුළත් කිරීමට සහ වාර්තා Preview / Print කිරීමට හැකිය.";
+            hint.innerText = "Officer: දත්ත යාවත්කාලීන කිරීමට, පසු විපරම් ඇතුළත් කිරීමට සහ වාර්තා බැලීමට හැකිය.";
         }
     }
 
@@ -614,24 +724,130 @@
         return "-";
     }
 
+    function getRawVal(doc, keys) {
+        for (const k of keys) {
+            if (doc[k] !== undefined && doc[k] !== null && String(doc[k]).trim() !== "") {
+                return String(doc[k]).trim();
+            }
+        }
+        return "";
+    }
+
     function normId(val) {
         return String(val || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
     }
 
-    function isDuplicateRecord(candidate) {
-        const cSlbfe = normId(candidate.slbfeRegNo || candidate["SLBFE Registration No"]);
-        const cPass = normId(candidate.passportNo || candidate.passport || candidate["Passport No"]);
-        const cNic = normId(candidate.nic || candidate["National Identifi cad No"]);
+    // --- AUTO-FILL & LOOKUP LOGIC ---
+    function findExistingWorker(slbfe, passport, nic) {
+        const s = normId(slbfe);
+        const p = normId(passport);
+        const n = normId(nic);
+        if (!s && !p && !n) return null;
 
-        return (window.allWorkers || []).some(w => {
-            const eSlbfe = normId(w.slbfeRegNo || w["SLBFE Registration No"]);
-            const ePass = normId(w.passportNo || w.passport || w["Passport No"]);
-            const eNic = normId(w.nic || w["National Identifi cad No"]);
+        return (window.allWorkers || []).find(w => {
+            const es = normId(w.slbfeRegNo || w["SLBFE Registration No"]);
+            const ep = normId(w.passportNo || w.passport || w["Passport No"]);
+            const en = normId(w.nic || w["National Identifi cad No"]);
 
-            return (cSlbfe && eSlbfe && cSlbfe === eSlbfe) ||
-                   (cPass && ePass && cPass === ePass) ||
-                   (cNic && eNic && cNic === eNic);
+            return (s && es && s === es) ||
+                   (p && ep && p === ep) ||
+                   (n && en && n === en);
         });
+    }
+
+    function checkAndAutoFill(sourceField) {
+        const slbfe = document.getElementById("f_slbfe").value;
+        const passport = document.getElementById("f_passport").value;
+        const nic = document.getElementById("f_nic").value;
+
+        const match = findExistingWorker(
+            sourceField === 'slbfe' ? slbfe : '',
+            sourceField === 'passport' ? passport : '',
+            sourceField === 'nic' ? nic : ''
+        );
+
+        if (match && document.getElementById("editingDocId").value !== match._docId) {
+            document.getElementById("editingDocId").value = match._docId;
+            
+            document.getElementById("f_slbfe").value = getRawVal(match, ["slbfeRegNo", "SLBFE Registration No", "slbfeNo"]);
+            document.getElementById("f_passport").value = getRawVal(match, ["passportNo", "Passport No", "passport"]);
+            document.getElementById("f_nic").value = getRawVal(match, ["nic", "National Identifi cad No", "National Identity Card No"]);
+            document.getElementById("f_name").value = getRawVal(match, ["name", "Name", "fullName"]);
+            
+            const g = extractGender(match);
+            if (g) document.getElementById("f_gender").value = g;
+
+            document.getElementById("f_country").value = getRawVal(match, ["country", "Country"]);
+            document.getElementById("f_job").value = getRawVal(match, ["job", "Job"]);
+            document.getElementById("f_depDate").value = formatIsoDate(match.departureDate || match["Depature Date"]);
+            document.getElementById("f_regDate").value = formatIsoDate(match.registerDate || match["Register Date"]);
+            document.getElementById("f_address").value = getRawVal(match, ["address", "Address"]);
+            document.getElementById("f_gn").value = getRawVal(match, ["gnDivision", "GN Division"]);
+            document.getElementById("f_ds").value = getRawVal(match, ["dsDivision", "DS Division"]) || "WELIPITIYA";
+            document.getElementById("f_district").value = getRawVal(match, ["district", "District"]) || "MATARA";
+            document.getElementById("f_license").value = getRawVal(match, ["licenseNumber", "License Number"]);
+            document.getElementById("f_agency").value = getRawVal(match, ["agencyName", "Agency Name"]);
+            document.getElementById("f_nominee").value = getRawVal(match, ["nomineeName", "Nominee Name"]);
+            document.getElementById("f_relation").value = getRawVal(match, ["relation", "Relation"]);
+            document.getElementById("f_nomAddr").value = getRawVal(match, ["nomineeAddress", "Nominee Address"]);
+            document.getElementById("f_nomContact").value = getRawVal(match, ["nomineeContactNo", "Nominee Contact No"]);
+
+            // Load existing children
+            const childContainer = document.getElementById("childrenRowsContainer");
+            childContainer.innerHTML = "";
+            if (Array.isArray(match.children)) {
+                match.children.forEach(c => addChildEntryRow(c));
+            }
+
+            // Show Auto-fill Banner & Update Button
+            const banner = document.getElementById("autoFillBanner");
+            banner.classList.remove("hidden");
+            document.getElementById("autoFillText").innerText = `පවතින වාර්තාවක් හමුවිය (${document.getElementById("f_name").value})! තොරතුරු ස්වයංක්‍රීයව පුරවා ඇත.`;
+            
+            const submitBtn = document.getElementById("submitWorkerBtn");
+            submitBtn.innerText = "පවතින තොරතුරු යාවත්කාලීන කරන්න (Update Record)";
+            submitBtn.classList.add("btn-warning");
+        }
+    }
+
+    function resetEntryForm() {
+        document.getElementById("mainWorkerForm").reset();
+        document.getElementById("editingDocId").value = "";
+        document.getElementById("f_ds").value = "WELIPITIYA";
+        document.getElementById("f_district").value = "MATARA";
+        document.getElementById("childrenRowsContainer").innerHTML = "";
+        document.getElementById("autoFillBanner").classList.add("hidden");
+        
+        const submitBtn = document.getElementById("submitWorkerBtn");
+        submitBtn.innerText = "නව දත්ත සුරකින්න";
+        submitBtn.classList.remove("btn-warning");
+    }
+
+    // --- FOLLOW-UP LOOKUP ---
+    let selectedWorkerForFollowUp = null;
+
+    function lookupWorkerForFollowUp() {
+        const query = document.getElementById("fu_searchId").value.trim();
+        const match = findExistingWorker(query, query, query);
+        const nameBox = document.getElementById("fu_workerName");
+
+        if (match) {
+            selectedWorkerForFollowUp = match;
+            nameBox.value = getRawVal(match, ["name", "Name", "fullName"]);
+            nameBox.style.background = "#dcfce7";
+        } else {
+            selectedWorkerForFollowUp = null;
+            nameBox.value = "";
+            nameBox.style.background = "#f1f5f9";
+        }
+    }
+
+    function isDuplicateRecord(candidate) {
+        return !!findExistingWorker(
+            candidate.slbfeRegNo || candidate["SLBFE Registration No"],
+            candidate.passportNo || candidate.passport || candidate["Passport No"],
+            candidate.nic || candidate["National Identifi cad No"]
+        );
     }
 
     function rowToWorkerObject(rawCols) {
@@ -758,8 +974,13 @@
 
     function formatIsoDate(v) {
         const d = parseDateValue(v);
-        if (!d) return v ? String(v) : "-";
+        if (!d) return "";
         return d.toISOString().split("T")[0];
+    }
+
+    function formatDisplayDate(v) {
+        const iso = formatIsoDate(v);
+        return iso || (v ? String(v) : "-");
     }
 
     function renderPeriodGenderReport() {
@@ -797,7 +1018,7 @@
                     <td>${getVal(w, ["nic", "National Identifi cad No", "National Identity Card No", "idNo"])}</td>
                     <td>${getVal(w, ["passportNo", "Passport No", "passport"])}</td>
                     <td>${getVal(w, ["country", "Country"])}</td>
-                    <td>${formatIsoDate(rawDt)}</td>
+                    <td>${formatDisplayDate(rawDt)}</td>
                 </tr>
             `);
         });
@@ -879,6 +1100,29 @@
         document.getElementById("crTo").value = "";
         document.getElementById("crRisk").value = "ALL";
         renderChildRiskReport();
+    }
+
+    function renderFollowUpTable() {
+        const tbody = document.getElementById("followUpTableBody");
+        if (!tbody) return;
+
+        if (!window.allFollowUps || window.allFollowUps.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">තවමත් පසු විපරම් වාර්තා ඇතුළත් කර නොමැත.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = window.allFollowUps.map(fu => `
+            <tr>
+                <td>${fu.followUpDate || "-"}</td>
+                <td><strong>${fu.workerName || "-"}</strong></td>
+                <td>${fu.searchId || "-"}</td>
+                <td>${fu.method || "-"}</td>
+                <td>${fu.status || "-"}</td>
+                <td style="white-space:normal; min-width:200px;">${fu.notes || "-"}</td>
+                <td>${fu.nextDate || "-"}</td>
+                <td>${fu.officerName || "-"}</td>
+            </tr>
+        `).join("");
     }
 
     function renderMasterRegister(workers) {
@@ -977,6 +1221,7 @@
     }
 
     function startRealtimeSync() {
+        // Sync Workers
         db.collection("workers").onSnapshot((snap) => {
             let total = 0;
             let female = 0;
@@ -986,6 +1231,7 @@
 
             snap.forEach(doc => {
                 const d = doc.data();
+                d._docId = doc.id; // Store Firestore Document ID for updates
                 records.push(d);
                 total++;
 
@@ -1015,11 +1261,25 @@
             console.error(err);
             document.getElementById("syncStatus").innerText = "සම්බන්ධතා දෝෂයකි";
         });
+
+        // Sync Follow-Ups
+        db.collection("follow_ups").orderBy("createdAt", "desc").onSnapshot((snap) => {
+            const fuList = [];
+            snap.forEach(doc => {
+                fuList.push(doc.data());
+            });
+            window.allFollowUps = fuList;
+            renderFollowUpTable();
+        }, (err) => {
+            console.error("Follow-ups sync error:", err);
+        });
     }
 
+    // Submit Worker (New OR Update Existing)
     document.getElementById("mainWorkerForm").addEventListener("submit", (e) => {
         e.preventDefault();
 
+        const editingId = document.getElementById("editingDocId").value.trim();
         const depDate = document.getElementById("f_depDate").value;
         const regDate = document.getElementById("f_regDate").value || depDate;
         const gVal = document.getElementById("f_gender").value.toUpperCase();
@@ -1047,25 +1307,69 @@
             nomineeAddress: document.getElementById("f_nomAddr").value.trim(),
             nomineeContactNo: document.getElementById("f_nomContact").value.trim(),
             children: readChildrenFromForm(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (editingId) {
+            // Update Existing Record
+            db.collection("workers").doc(editingId).update(payload)
+                .then(() => {
+                    alert("පවතින වාර්තාව සාර්ථකව යාවත්කාලීන (Update) කරන ලදී!");
+                    resetEntryForm();
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("යාවත්කාලීන කිරීමේදී දෝෂයක් ඇතිවිය.");
+                });
+        } else {
+            // Add New Record (Check duplicate first)
+            if (isDuplicateRecord(payload)) {
+                alert("මෙම SLBFE අංකය / ගමන් බලපත්‍ර අංකය / NIC අංකය සහිත වාර්තාවක් දැනටමත් පවතී!");
+                return;
+            }
+            payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            db.collection("workers").add(payload)
+                .then(() => {
+                    alert("නව තොරතුරු සාර්ථකව සුරකින ලදී!");
+                    resetEntryForm();
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("දත්ත සුරැකීමේදී දෝෂයක් ඇතිවිය.");
+                });
+        }
+    });
+
+    // Submit Follow-Up Record
+    document.getElementById("followUpForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const searchId = document.getElementById("fu_searchId").value.trim();
+        const wName = document.getElementById("fu_workerName").value.trim() || "හඳුනා නොගත් (අංකය: " + searchId + ")";
+
+        const fuData = {
+            workerDocId: selectedWorkerForFollowUp ? selectedWorkerForFollowUp._docId : "",
+            searchId: searchId,
+            workerName: wName,
+            followUpDate: document.getElementById("fu_date").value,
+            method: document.getElementById("fu_method").value,
+            status: document.getElementById("fu_status").value,
+            nextDate: document.getElementById("fu_nextDate").value,
+            officerName: document.getElementById("fu_officer").value.trim(),
+            notes: document.getElementById("fu_notes").value.trim(),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        if (isDuplicateRecord(payload)) {
-            alert("මෙම SLBFE අංකය / ගමන් බලපත්‍ර අංකය / NIC අංකය සහිත වාර්තාවක් දැනටමත් පවතී (Duplicate වාර්තාවකි).");
-            return;
-        }
-
-        db.collection("workers").add(payload)
+        db.collection("follow_ups").add(fuData)
             .then(() => {
-                alert("තොරතුරු සාර්ථකව සුරකින ලදී.");
-                document.getElementById("mainWorkerForm").reset();
-                document.getElementById("f_ds").value = "WELIPITIYA";
-                document.getElementById("f_district").value = "MATARA";
-                document.getElementById("childrenRowsContainer").innerHTML = "";
+                alert("පසු විපරම් සටහන සාර්ථකව සුරකින ලදී!");
+                document.getElementById("followUpForm").reset();
+                document.getElementById("fu_workerName").style.background = "#f1f5f9";
+                selectedWorkerForFollowUp = null;
             })
-            .catch((err) => {
+            .catch(err => {
                 console.error(err);
-                alert("දත්ත සුරැකීමේදී දෝෂයක් ඇතිවිය.");
+                alert("පසු විපරම් සටහන සුරැකීමේදී දෝෂයක් ඇතිවිය.");
             });
     });
 
