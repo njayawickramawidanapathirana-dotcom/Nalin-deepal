@@ -45,9 +45,29 @@
             gap: 12px;
             padding-bottom: 14px;
             border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 16px;
+        }
+        h2, h3, h4 { color: var(--primary); margin: 0; }
+        .quick-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 10px 12px;
+            border-radius: 8px;
             margin-bottom: 18px;
         }
-        h2, h3, h4 { color: var(--primary); margin: 0 0 10px 0; }
+        .quick-nav button {
+            padding: 7px 12px;
+            font-size: 13px;
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        .quick-nav button:hover {
+            background: var(--primary);
+            color: #fff;
+        }
         .role-panel {
             display: flex;
             flex-wrap: wrap;
@@ -59,7 +79,7 @@
             border-left: 5px solid var(--primary);
             padding: 12px 16px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
         .badge {
             display: inline-block;
@@ -74,7 +94,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
             gap: 14px;
-            margin-bottom: 22px;
+            margin-bottom: 20px;
         }
         .stat-card {
             background: #f8fafc;
@@ -89,8 +109,27 @@
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+        .section-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .section-title-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        .section-body {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
         }
         .form-grid {
             display: grid;
@@ -118,13 +157,20 @@
             background: var(--primary);
             color: #fff;
             border: none;
-            padding: 9px 15px;
+            padding: 8px 14px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
         }
         button:hover { background: var(--primary-hover); }
+        .btn-toggle {
+            background: #334155;
+            color: #fff;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .btn-toggle:hover { background: #1e293b; }
         .btn-secondary { background: #475569; }
         .btn-secondary:hover { background: #334155; }
         .btn-danger { background: var(--danger); padding: 7px 11px; }
@@ -225,6 +271,17 @@
         <div id="syncStatus" class="badge" style="background:#0f766e;">Firestore සම්බන්ධ වෙමින් පවතී...</div>
     </div>
 
+    <!-- Quick Jump Bar (Scroll නොකර අවශ්‍ය කොටසට යාමට) -->
+    <div class="quick-nav no-print">
+        <span style="font-size:13px; font-weight:bold; color:#334155; align-self:center; margin-right:4px;">ඉක්මන් පිවිසුම:</span>
+        <button type="button" onclick="openAndJump('periodGenderSection', 'pgBody')">1. කාලසීමා වාර්තාව</button>
+        <button type="button" onclick="openAndJump('childRiskSection', 'crBody')">2. දරුවන්ගේ අවදානම් වාර්තාව</button>
+        <button type="button" onclick="openAndJump('entryFormSection', 'entryBody')">3. දත්ත ඇතුළත් කිරීම / Auto-Fill</button>
+        <button type="button" onclick="openAndJump('followUpSection', 'fuBody')">4. පසු විපරම් (Follow-up)</button>
+        <button type="button" onclick="openAndJump('masterRegisterSection', 'masterBody')">5. සම්පූර්ණ ලේඛනය (19)</button>
+        <button type="button" class="btn-secondary" style="color:#fff;" onclick="collapseAllSections()">සියල්ල හකුළන්න</button>
+    </div>
+
     <!-- Role Switcher (Admin / Officer) -->
     <div class="role-panel no-print">
         <div>
@@ -267,347 +324,390 @@
 
     <!-- ADMIN ONLY: Excel / CSV Import -->
     <div class="section-box no-print hidden" id="adminImportBox" style="background:#f0f9ff; border-color:#7dd3fc;">
-        <h3>Excel / CSV ගොනුවෙන් දත්ත Import කිරීම (Admin පමණි)</h3>
-        <p style="font-size:13px; color:#334155; margin-top:0;">
-            පවතින <strong>SLBFE Registration No</strong>, <strong>Passport No</strong>, හෝ <strong>NIC</strong> සමඟ ගැළපේ නම් duplicate නොවන ලෙස ස්වයංක්‍රීයව මඟහැරේ.
-        </p>
-        <div class="filter-row">
-            <div>
-                <label for="excelFile">Excel (.xlsx, .xls) හෝ CSV ගොනුව:</label>
-                <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" class="form-control">
+        <div class="section-header" onclick="toggleSection('adminImportBody', 'adminImportBtn')">
+            <div class="section-title-group">
+                <h3>Excel / CSV ගොනුවෙන් දත්ත Import කිරීම (Admin පමණි)</h3>
             </div>
-            <button type="button" onclick="handleExcelFileImport()">Excel ගොනුව Import කරන්න</button>
+            <button type="button" id="adminImportBtn" class="btn-toggle">විවෘත කරන්න</button>
         </div>
-        <div class="form-group">
-            <label for="excelPasteText">හෝ Excel වෙතින් Copy කළ පේළි මෙහි Paste කරන්න:</label>
-            <textarea id="excelPasteText" rows="3" class="form-control" placeholder="Excel පේළි මෙහි paste කරන්න..."></textarea>
-        </div>
-        <button type="button" class="btn-secondary" onclick="handleExcelPasteImport()">Paste කළ දත්ත Import කරන්න</button>
-        <div id="importResultBox" class="status-box hidden"></div>
-    </div>
-
-    <!-- REPORT 1: Period Gender & Total Report -->
-    <div class="section-box" id="periodGenderSection">
-        <div class="filter-row no-print" style="justify-content:space-between;">
-            <h3 style="margin:0;">1. කාලසීමාව අනුව විදේශගත වූ කාන්තා, පුරුෂ සහ සමස්ත වාර්තාව</h3>
-            <button type="button" class="btn-print" onclick="printPreviewSection('periodGenderPreview', 'කාලසීමාව අනුව විදේශගත වූ පිරිසගේ වාර්තාව')">මුද්‍රණය කරන්න (Print)</button>
-        </div>
-
-        <div class="filter-row no-print">
-            <div>
-                <label for="pgFrom">ආරම්භක දිනය (From):</label>
-                <input type="date" id="pgFrom" class="form-control">
-            </div>
-            <div>
-                <label for="pgTo">අවසාන දිනය (To):</label>
-                <input type="date" id="pgTo" class="form-control">
-            </div>
-            <div>
-                <label for="pgGender">ස්ත්‍රි / පුරුෂ පෙරහන:</label>
-                <select id="pgGender" class="form-control">
-                    <option value="ALL">සියල්ල (සමස්තය)</option>
-                    <option value="F">කාන්තා පමණි (F)</option>
-                    <option value="M">පිරිමි පමණි (M)</option>
-                </select>
-            </div>
-            <button type="button" onclick="renderPeriodGenderReport()">Preview වාර්තාව</button>
-            <button type="button" class="btn-secondary" onclick="resetPeriodGenderReport()">Reset</button>
-        </div>
-
-        <div id="periodGenderPreview" class="preview-card">
-            <h4 id="pgHeading">කාලසීමාව අනුව විදේශගත වූ පිරිසගේ වාර්තාව (සියලු දින)</h4>
-            <div class="summary-grid">
-                <div class="summary-item" style="border-left-color:#db2777;">
-                    <span>කාන්තාවන් ප්‍රමාණය (F)</span>
-                    <strong id="pgFemaleTotal">0</strong>
+        <div id="adminImportBody" class="section-body hidden">
+            <p style="font-size:13px; color:#334155; margin-top:0;">
+                පවතින <strong>SLBFE Registration No</strong>, <strong>Passport No</strong>, හෝ <strong>NIC</strong> සමඟ ගැළපේ නම් duplicate නොවන ලෙස ස්වයංක්‍රීයව මඟහැරේ.
+            </p>
+            <div class="filter-row">
+                <div>
+                    <label for="excelFile">Excel (.xlsx, .xls) හෝ CSV ගොනුව:</label>
+                    <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" class="form-control">
                 </div>
-                <div class="summary-item" style="border-left-color:#0284c7;">
-                    <span>පුරුෂයන් ප්‍රමාණය (M)</span>
-                    <strong id="pgMaleTotal">0</strong>
-                </div>
-                <div class="summary-item" style="border-left-color:#15803d;">
-                    <span>සමස්ත විදේශගත ප්‍රමාණය (Total)</span>
-                    <strong id="pgGrandTotal">0</strong>
-                </div>
-            </div>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>නම</th>
-                            <th>ස්ත්‍රි / පුරුෂ (F/M)</th>
-                            <th>ජාතික හැඳුනුම්පත් අංකය</th>
-                            <th>ගමන් බලපත්‍ර අංකය</th>
-                            <th>රට</th>
-                            <th>පිටත්වීමේ / ලියාපදිංචි දිනය</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pgTableBody">
-                        <tr><td colspan="7" style="text-align:center;">දත්ත පූරණය වෙමින් පවතී...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- REPORT 2: Period Children & Risk Status Report -->
-    <div class="section-box" id="childRiskSection">
-        <div class="filter-row no-print" style="justify-content:space-between;">
-            <h3 style="margin:0;">2. කාලසීමාව අනුව දරුවන්ගේ විස්තර හා අවදානම් තත්වයේ වාර්තාව</h3>
-            <button type="button" class="btn-print" onclick="printPreviewSection('childRiskPreview', 'දරුවන්ගේ විස්තර හා අවදානම් තත්වයේ වාර්තාව')">දරුවන්ගේ වාර්තාව මුද්‍රණය (Print)</button>
-        </div>
-
-        <div class="filter-row no-print">
-            <div>
-                <label for="crFrom">ආරම්භක දිනය (From):</label>
-                <input type="date" id="crFrom" class="form-control">
-            </div>
-            <div>
-                <label for="crTo">අවසාන දිනය (To):</label>
-                <input type="date" id="crTo" class="form-control">
-            </div>
-            <div>
-                <label for="crRisk">අවදානම් තත්වය:</label>
-                <select id="crRisk" class="form-control">
-                    <option value="ALL">සියල්ල</option>
-                    <option value="ඉහළ අවදානම්">ඉහළ අවදානම්</option>
-                    <option value="මධ්‍යස්ථ අවදානම්">මධ්‍යස්ථ අවදානම්</option>
-                    <option value="සාමාන්‍ය">සාමාන්‍ය</option>
-                </select>
-            </div>
-            <button type="button" onclick="renderChildRiskReport()">Preview වාර්තාව</button>
-            <button type="button" class="btn-secondary" onclick="resetChildRiskReport()">Reset</button>
-        </div>
-
-        <div id="childRiskPreview" class="preview-card">
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>විදේශගත පුද්ගලයාගේ නම</th>
-                            <th>ජාතික හැඳුනුම්පත් අංකය</th>
-                            <th>ගමන් බලපත්‍ර අංකය</th>
-                            <th>දරුවාගේ නම</th>
-                            <th>උපන් දිනය</th>
-                            <th>පාසැල්</th>
-                            <th>ශ්‍රේණිය</th>
-                            <th>දරුවාගේ අවදානම් තත්වය</th>
-                        </tr>
-                    </thead>
-                    <tbody id="crTableBody">
-                        <tr><td colspan="8" style="text-align:center;">දත්ත පූරණය වෙමින් පවතී...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- SECTION 3: ENTRY & AUTO-FILL FORM (Admin & Officer) -->
-    <div class="section-box no-print" id="entryFormSection">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
-            <h3 style="margin:0;">3. ශ්‍රමික තොරතුරු ඇතුළත් කිරීම / යාවත්කාලීන කිරීම (Auto-Fill)</h3>
-            <button type="button" class="btn-secondary" onclick="resetEntryForm()">පෝරමය හිස් කරන්න (Clear Form)</button>
-        </div>
-        <p style="font-size:13px; color:#475569; margin-top:0;">
-            * <strong>SLBFE අංකය</strong>, <strong>ගමන් බලපත්‍ර අංකය</strong> හෝ <strong>NIC අංකය</strong> ටයිප් කළ විට, එම පුද්ගලයා දැනටමත් දත්ත ගොනුවේ සිටී නම් තොරතුරු ස්වයංක්‍රීයව පිරවේ (Auto-Fill).
-        </p>
-
-        <div id="autoFillBanner" class="autofill-banner hidden">
-            <span id="autoFillText">පවතින වාර්තාවක් හමුවිය! තොරතුරු ස්වයංක්‍රීයව පුරවා ඇත.</span>
-            <button type="button" class="btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="resetEntryForm()">නව වාර්තාවක් ලෙස අරඹන්න</button>
-        </div>
-
-        <form id="mainWorkerForm">
-            <input type="hidden" id="editingDocId" value="">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="f_slbfe">SLBFE Registration No (සෙවීමට ටයිප් කරන්න):</label>
-                    <input type="text" id="f_slbfe" class="form-control" oninput="checkAndAutoFill('slbfe')">
-                </div>
-                <div class="form-group">
-                    <label for="f_passport">ගමන් බලපත්‍ර අංකය (Passport No) *:</label>
-                    <input type="text" id="f_passport" class="form-control" required oninput="checkAndAutoFill('passport')">
-                </div>
-                <div class="form-group">
-                    <label for="f_nic">ජාතික හැඳුනුම්පත් අංකය (NIC):</label>
-                    <input type="text" id="f_nic" class="form-control" oninput="checkAndAutoFill('nic')">
-                </div>
-                <div class="form-group">
-                    <label for="f_name">විදේශගත පුද්ගලයාගේ නම *:</label>
-                    <input type="text" id="f_name" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="f_gender">ලිංගභේදය (F / M) *:</label>
-                    <select id="f_gender" class="form-control" required>
-                        <option value="">තෝරන්න...</option>
-                        <option value="F">F (කාන්තා)</option>
-                        <option value="M">M (පිරිමි)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="f_country">රට (Country):</label>
-                    <input type="text" id="f_country" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="f_job">රැකියාව (Job):</label>
-                    <input type="text" id="f_job" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="f_depDate">පිටත්වීමේ දිනය (Depature Date):</label>
-                    <input type="date" id="f_depDate" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="f_regDate">ලියාපදිංචි දිනය (Register Date):</label>
-                    <input type="date" id="f_regDate" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="f_address">ලිපිනය (Address):</label>
-                    <input type="text" id="f_address" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="f_gn">GN Division:</label>
-                    <input type="text" id="f_gn" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="f_ds">DS Division:</label>
-                    <input type="text" id="f_ds" class="form-control" value="WELIPITIYA">
-                </div>
-                <div class="form-group">
-                    <label for="f_district">District:</label>
-                    <input type="text" id="f_district" class="form-control" value="MATARA">
-                </div>
-                <div class="form-group">
-                    <label for="f_license">License Number:</label>
-                    <input type="text" id="f_license" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="f_agency">Agency Name:</label>
-                    <input type="text" id="f_agency" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="f_nominee">Nominee Name:</label>
-                    <input type="text" id="f_nominee" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="f_relation">Relation:</label>
-                    <input type="text" id="f_relation" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="f_nomAddr">Nominee Address:</label>
-                    <input type="text" id="f_nomAddr" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="f_nomContact">Nominee Contact No:</label>
-                    <input type="text" id="f_nomContact" class="form-control">
-                </div>
-            </div>
-
-            <!-- දරුවන්ගේ විස්තර -->
-            <div class="section-box" style="background:#eff6ff; border-color:#bfdbfe; margin-top:10px;">
-                <h4>දරුවන්ගේ විස්තර (නම, උපන් දිනය, පාසැල්, ශ්‍රේණිය, අවදානම් තත්වය)</h4>
-                <div id="childrenRowsContainer"></div>
-                <button type="button" class="btn-secondary" onclick="addChildEntryRow()">+ දරුවෙකු එකතු කරන්න</button>
-            </div>
-
-            <button type="submit" id="submitWorkerBtn" style="margin-top:8px;">නව දත්ත සුරකින්න</button>
-        </form>
-    </div>
-
-    <!-- SECTION 4: FOLLOW-UP FORM & LOGS (පසු විපරම් පෝරමය) -->
-    <div class="section-box" id="followUpSection" style="background:#fffbeb; border-color:#fde68a;">
-        <div class="filter-row no-print" style="justify-content:space-between;">
-            <h3 style="margin:0; color:#92400e;">4. පසු විපරම් (Follow-up) තොරතුරු ඇතුළත් කිරීම සහ ඉතිහාසය</h3>
-            <button type="button" class="btn-print" onclick="printPreviewSection('followUpPreview', 'පසු විපරම් වාර්තාව')">පසු විපරම් වාර්තාව මුද්‍රණය (Print)</button>
-        </div>
-
-        <form id="followUpForm" class="no-print" style="margin-bottom:16px;">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="fu_searchId">ශ්‍රමිකයා සොයන්න (Passport / NIC / SLBFE අංකය) *:</label>
-                    <input type="text" id="fu_searchId" class="form-control" placeholder="අංකය ටයිප් කරන්න..." required oninput="lookupWorkerForFollowUp()">
-                </div>
-                <div class="form-group">
-                    <label for="fu_workerName">විදේශගත පුද්ගලයාගේ නම:</label>
-                    <input type="text" id="fu_workerName" class="form-control" readonly style="background:#f1f5f9;" placeholder="ස්වයංක්‍රීයව පිරවේ...">
-                </div>
-                <div class="form-group">
-                    <label for="fu_date">පසු විපරම් කළ දිනය *:</label>
-                    <input type="date" id="fu_date" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="fu_method">පසු විපරම් ක්‍රමය:</label>
-                    <select id="fu_method" class="form-control">
-                        <option value="නිවසට පැමිණීම (Home Visit)">නිවසට පැමිණීම (Home Visit)</option>
-                        <option value="දුරකථන ඇමතුමක් (Phone Call)">දුරකථන ඇමතුමක් (Phone Call)</option>
-                        <option value="කාර්යාලයට කැඳවීම (Office Visit)">කාර්යාලයට කැඳවීම (Office Visit)</option>
-                        <option value="පාසල හරහා (School Visit)">පාසල හරහා (School Visit)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="fu_status">පවුලේ / දරුවන්ගේ වත්මන් තත්වය:</label>
-                    <select id="fu_status" class="form-control">
-                        <option value="සතුටුදායකයි / සාමාන්‍යයි">සතුටුදායකයි / සාමාන්‍යයි</option>
-                        <option value="අධ්‍යාපන ගැටලු ඇත">අධ්‍යාපන ගැටලු ඇත</option>
-                        <option value="රැකවරණ / සෞඛ්‍ය ගැටලු ඇත">රැකවරණ / සෞඛ්‍ය ගැටලු ඇත</option>
-                        <option value="විශේෂ මැදිහත්වීමක් අවශ්‍යයි">විශේෂ මැදිහත්වීමක් අවශ්‍යයි</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="fu_nextDate">මීළඟ පසු විපරම් දිනය:</label>
-                    <input type="date" id="fu_nextDate" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="fu_officer">නිලධාරියාගේ නම (Officer Name):</label>
-                    <input type="text" id="fu_officer" class="form-control" placeholder="නිලධාරියාගේ නම">
-                </div>
+                <button type="button" onclick="handleExcelFileImport()">Excel ගොනුව Import කරන්න</button>
             </div>
             <div class="form-group">
-                <label for="fu_notes">නිරීක්ෂණ සහ ලබා දුන් උපදෙස් / පියවර *:</label>
-                <textarea id="fu_notes" rows="2" class="form-control" placeholder="පසු විපරම් විස්තර මෙහි සටහන් කරන්න..." required></textarea>
+                <label for="excelPasteText">හෝ Excel වෙතින් Copy කළ පේළි මෙහි Paste කරන්න:</label>
+                <textarea id="excelPasteText" rows="3" class="form-control" placeholder="Excel පේළි මෙහි paste කරන්න..."></textarea>
             </div>
-            <button type="submit" class="btn-warning">පසු විපරම් සටහන සුරකින්න</button>
-        </form>
+            <button type="button" class="btn-secondary" onclick="handleExcelPasteImport()">Paste කළ දත්ත Import කරන්න</button>
+            <div id="importResultBox" class="status-box hidden"></div>
+        </div>
+    </div>
 
-        <!-- Follow-up History Table -->
-        <div id="followUpPreview" class="preview-card">
-            <h4>පසු විපරම් වාර්තා ඉතිහාසය</h4>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>දිනය</th>
-                            <th>ශ්‍රමිකයාගේ නම</th>
-                            <th>Passport / NIC</th>
-                            <th>ක්‍රමය</th>
-                            <th>වත්මන් තත්වය</th>
-                            <th>නිරීක්ෂණ සහ පියවර</th>
-                            <th>මීළඟ දිනය</th>
-                            <th>නිලධාරියා</th>
-                        </tr>
-                    </thead>
-                    <tbody id="followUpTableBody">
-                        <tr><td colspan="8" style="text-align:center;">පසු විපරම් වාර්තා පූරණය වෙමින් පවතී...</td></tr>
-                    </tbody>
-                </table>
+    <!-- SECTION 1: Period Gender & Total Report (Collapsible) -->
+    <div class="section-box" id="periodGenderSection">
+        <div class="section-header" onclick="toggleSection('pgBody', 'pgToggleBtn')">
+            <div class="section-title-group">
+                <h3>1. කාලසීමාව අනුව විදේශගත වූ කාන්තා, පුරුෂ සහ සමස්ත වාර්තාව</h3>
+            </div>
+            <div style="display:flex; gap:8px;" class="no-print" onclick="event.stopPropagation();">
+                <button type="button" class="btn-print" onclick="openSectionForPrint('pgBody', 'pgToggleBtn', 'periodGenderPreview', 'කාලසීමාව අනුව විදේශගත වූ පිරිසගේ වාර්තාව')">Print</button>
+                <button type="button" id="pgToggleBtn" class="btn-toggle" onclick="toggleSection('pgBody', 'pgToggleBtn')">විවෘත කරන්න</button>
+            </div>
+        </div>
+
+        <div id="pgBody" class="section-body hidden">
+            <div class="filter-row no-print">
+                <div>
+                    <label for="pgFrom">ආරම්භක දිනය (From):</label>
+                    <input type="date" id="pgFrom" class="form-control">
+                </div>
+                <div>
+                    <label for="pgTo">අවසාන දිනය (To):</label>
+                    <input type="date" id="pgTo" class="form-control">
+                </div>
+                <div>
+                    <label for="pgGender">ස්ත්‍රි / පුරුෂ පෙරහන:</label>
+                    <select id="pgGender" class="form-control">
+                        <option value="ALL">සියල්ල (සමස්තය)</option>
+                        <option value="F">කාන්තා පමණි (F)</option>
+                        <option value="M">පිරිමි පමණි (M)</option>
+                    </select>
+                </div>
+                <button type="button" onclick="renderPeriodGenderReport()">Preview වාර්තාව</button>
+                <button type="button" class="btn-secondary" onclick="resetPeriodGenderReport()">Reset</button>
+            </div>
+
+            <div id="periodGenderPreview" class="preview-card">
+                <h4 id="pgHeading">කාලසීමාව අනුව විදේශගත වූ පිරිසගේ වාර්තාව (සියලු දින)</h4>
+                <div class="summary-grid">
+                    <div class="summary-item" style="border-left-color:#db2777;">
+                        <span>කාන්තාවන් ප්‍රමාණය (F)</span>
+                        <strong id="pgFemaleTotal">0</strong>
+                    </div>
+                    <div class="summary-item" style="border-left-color:#0284c7;">
+                        <span>පුරුෂයන් ප්‍රමාණය (M)</span>
+                        <strong id="pgMaleTotal">0</strong>
+                    </div>
+                    <div class="summary-item" style="border-left-color:#15803d;">
+                        <span>සමස්ත විදේශගත ප්‍රමාණය (Total)</span>
+                        <strong id="pgGrandTotal">0</strong>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>නම</th>
+                                <th>ස්ත්‍රි / පුරුෂ (F/M)</th>
+                                <th>ජාතික හැඳුනුම්පත් අංකය</th>
+                                <th>ගමන් බලපත්‍ර අංකය</th>
+                                <th>රට</th>
+                                <th>පිටත්වීමේ / ලියාපදිංචි දිනය</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pgTableBody">
+                            <tr><td colspan="7" style="text-align:center;">දත්ත පූරණය වෙමින් පවතී...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- REPORT 5: 19-Column Master Register -->
-    <div class="section-box" id="masterRegisterSection">
-        <div class="filter-row no-print" style="justify-content:space-between;">
-            <h3 style="margin:0;">5. සම්පූර්ණ ශ්‍රමික ලේඛනය (තීරු 19)</h3>
-            <button type="button" class="btn-print" onclick="printPreviewSection('masterRegisterPreview', 'සම්පූර්ණ ශ්‍රමික ලේඛනය')">සම්පූර්ණ ලේඛනය මුද්‍රණය (Print)</button>
+    <!-- SECTION 2: Period Children & Risk Status Report (Collapsible) -->
+    <div class="section-box" id="childRiskSection">
+        <div class="section-header" onclick="toggleSection('crBody', 'crToggleBtn')">
+            <div class="section-title-group">
+                <h3>2. කාලසීමාව අනුව දරුවන්ගේ විස්තර හා අවදානම් තත්වයේ වාර්තාව</h3>
+            </div>
+            <div style="display:flex; gap:8px;" class="no-print" onclick="event.stopPropagation();">
+                <button type="button" class="btn-print" onclick="openSectionForPrint('crBody', 'crToggleBtn', 'childRiskPreview', 'දරුවන්ගේ විස්තර හා අවදානම් තත්වයේ වාර්තාව')">Print</button>
+                <button type="button" id="crToggleBtn" class="btn-toggle" onclick="toggleSection('crBody', 'crToggleBtn')">විවෘත කරන්න</button>
+            </div>
         </div>
-        <div id="masterRegisterPreview" class="preview-card">
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr id="masterHeadRow"></tr>
-                    </thead>
-                    <tbody id="masterBodyRows"></tbody>
-                </table>
+
+        <div id="crBody" class="section-body hidden">
+            <div class="filter-row no-print">
+                <div>
+                    <label for="crFrom">ආරම්භක දිනය (From):</label>
+                    <input type="date" id="crFrom" class="form-control">
+                </div>
+                <div>
+                    <label for="crTo">අවසාන දිනය (To):</label>
+                    <input type="date" id="crTo" class="form-control">
+                </div>
+                <div>
+                    <label for="crRisk">අවදානම් තත්වය:</label>
+                    <select id="crRisk" class="form-control">
+                        <option value="ALL">සියල්ල</option>
+                        <option value="ඉහළ අවදානම්">ඉහළ අවදානම්</option>
+                        <option value="මධ්‍යස්ථ අවදානම්">මධ්‍යස්ථ අවදානම්</option>
+                        <option value="සාමාන්‍ය">සාමාන්‍ය</option>
+                    </select>
+                </div>
+                <button type="button" onclick="renderChildRiskReport()">Preview වාර්තාව</button>
+                <button type="button" class="btn-secondary" onclick="resetChildRiskReport()">Reset</button>
+            </div>
+
+            <div id="childRiskPreview" class="preview-card">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>විදේශගත පුද්ගලයාගේ නම</th>
+                                <th>ජාතික හැඳුනුම්පත් අංකය</th>
+                                <th>ගමන් බලපත්‍ර අංකය</th>
+                                <th>දරුවාගේ නම</th>
+                                <th>උපන් දිනය</th>
+                                <th>පාසැල්</th>
+                                <th>ශ්‍රේණිය</th>
+                                <th>දරුවාගේ අවදානම් තත්වය</th>
+                            </tr>
+                        </thead>
+                        <tbody id="crTableBody">
+                            <tr><td colspan="8" style="text-align:center;">දත්ත පූරණය වෙමින් පවතී...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: ENTRY & AUTO-FILL FORM (Collapsible) -->
+    <div class="section-box no-print" id="entryFormSection">
+        <div class="section-header" onclick="toggleSection('entryBody', 'entryToggleBtn')">
+            <div class="section-title-group">
+                <h3>3. ශ්‍රමික තොරතුරු ඇතුළත් කිරීම / යාවත්කාලීන කිරීම (Auto-Fill)</h3>
+            </div>
+            <button type="button" id="entryToggleBtn" class="btn-toggle">විවෘත කරන්න</button>
+        </div>
+
+        <div id="entryBody" class="section-body hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+                <p style="font-size:13px; color:#475569; margin:0;">
+                    * <strong>SLBFE අංකය</strong>, <strong>ගමන් බලපත්‍ර අංකය</strong> හෝ <strong>NIC අංකය</strong> ටයිප් කළ විට, පවතින වාර්තාවක් ඇත්නම් තොරතුරු ස්වයංක්‍රීයව පිරවේ (Auto-Fill).
+                </p>
+                <button type="button" class="btn-secondary" onclick="resetEntryForm()">පෝරමය හිස් කරන්න</button>
+            </div>
+
+            <div id="autoFillBanner" class="autofill-banner hidden">
+                <span id="autoFillText">පවතින වාර්තාවක් හමුවිය! තොරතුරු ස්වයංක්‍රීයව පුරවා ඇත.</span>
+                <button type="button" class="btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="resetEntryForm()">නව වාර්තාවක් ලෙස අරඹන්න</button>
+            </div>
+
+            <form id="mainWorkerForm">
+                <input type="hidden" id="editingDocId" value="">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="f_slbfe">SLBFE Registration No:</label>
+                        <input type="text" id="f_slbfe" class="form-control" oninput="checkAndAutoFill('slbfe')">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_passport">ගමන් බලපත්‍ර අංකය (Passport No) *:</label>
+                        <input type="text" id="f_passport" class="form-control" required oninput="checkAndAutoFill('passport')">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_nic">ජාතික හැඳුනුම්පත් අංකය (NIC):</label>
+                        <input type="text" id="f_nic" class="form-control" oninput="checkAndAutoFill('nic')">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_name">විදේශගත පුද්ගලයාගේ නම *:</label>
+                        <input type="text" id="f_name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="f_gender">ලිංගභේදය (F / M) *:</label>
+                        <select id="f_gender" class="form-control" required>
+                            <option value="">තෝරන්න...</option>
+                            <option value="F">F (කාන්තා)</option>
+                            <option value="M">M (පිරිමි)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="f_country">රට (Country):</label>
+                        <input type="text" id="f_country" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_job">රැකියාව (Job):</label>
+                        <input type="text" id="f_job" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_depDate">පිටත්වීමේ දිනය (Depature Date):</label>
+                        <input type="date" id="f_depDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_regDate">ලියාපදිංචි දිනය (Register Date):</label>
+                        <input type="date" id="f_regDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_address">ලිපිනය (Address):</label>
+                        <input type="text" id="f_address" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_gn">GN Division:</label>
+                        <input type="text" id="f_gn" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_ds">DS Division:</label>
+                        <input type="text" id="f_ds" class="form-control" value="WELIPITIYA">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_district">District:</label>
+                        <input type="text" id="f_district" class="form-control" value="MATARA">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_license">License Number:</label>
+                        <input type="text" id="f_license" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_agency">Agency Name:</label>
+                        <input type="text" id="f_agency" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_nominee">Nominee Name:</label>
+                        <input type="text" id="f_nominee" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_relation">Relation:</label>
+                        <input type="text" id="f_relation" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_nomAddr">Nominee Address:</label>
+                        <input type="text" id="f_nomAddr" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_nomContact">Nominee Contact No:</label>
+                        <input type="text" id="f_nomContact" class="form-control">
+                    </div>
+                </div>
+
+                <!-- දරුවන්ගේ විස්තර -->
+                <div class="section-box" style="background:#eff6ff; border-color:#bfdbfe; margin-top:10px;">
+                    <h4 style="margin-bottom:10px;">දරුවන්ගේ විස්තර (නම, උපන් දිනය, පාසැල්, ශ්‍රේණිය, අවදානම් තත්වය)</h4>
+                    <div id="childrenRowsContainer"></div>
+                    <button type="button" class="btn-secondary" onclick="addChildEntryRow()">+ දරුවෙකු එකතු කරන්න</button>
+                </div>
+
+                <button type="submit" id="submitWorkerBtn" style="margin-top:8px;">නව දත්ත සුරකින්න</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SECTION 4: FOLLOW-UP FORM & LOGS (Collapsible) -->
+    <div class="section-box" id="followUpSection" style="background:#fffbeb; border-color:#fde68a;">
+        <div class="section-header" onclick="toggleSection('fuBody', 'fuToggleBtn')">
+            <div class="section-title-group">
+                <h3 style="color:#92400e;">4. පසු විපරම් (Follow-up) තොරතුරු ඇතුළත් කිරීම සහ ඉතිහාසය</h3>
+            </div>
+            <div style="display:flex; gap:8px;" class="no-print" onclick="event.stopPropagation();">
+                <button type="button" class="btn-print" onclick="openSectionForPrint('fuBody', 'fuToggleBtn', 'followUpPreview', 'පසු විපරම් වාර්තාව')">Print</button>
+                <button type="button" id="fuToggleBtn" class="btn-toggle" onclick="toggleSection('fuBody', 'fuToggleBtn')">විවෘත කරන්න</button>
+            </div>
+        </div>
+
+        <div id="fuBody" class="section-body hidden">
+            <form id="followUpForm" class="no-print" style="margin-bottom:16px;">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="fu_searchId">ශ්‍රමිකයා සොයන්න (Passport / NIC / SLBFE අංකය) *:</label>
+                        <input type="text" id="fu_searchId" class="form-control" placeholder="අංකය ටයිප් කරන්න..." required oninput="lookupWorkerForFollowUp()">
+                    </div>
+                    <div class="form-group">
+                        <label for="fu_workerName">විදේශගත පුද්ගලයාගේ නම:</label>
+                        <input type="text" id="fu_workerName" class="form-control" readonly style="background:#f1f5f9;" placeholder="ස්වයංක්‍රීයව පිරවේ...">
+                    </div>
+                    <div class="form-group">
+                        <label for="fu_date">පසු විපරම් කළ දිනය *:</label>
+                        <input type="date" id="fu_date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fu_method">පසු විපරම් ක්‍රමය:</label>
+                        <select id="fu_method" class="form-control">
+                            <option value="නිවසට පැමිණීම (Home Visit)">නිවසට පැමිණීම (Home Visit)</option>
+                            <option value="දුරකථන ඇමතුමක් (Phone Call)">දුරකථන ඇමතුමක් (Phone Call)</option>
+                            <option value="කාර්යාලයට කැඳවීම (Office Visit)">කාර්යාලයට කැඳවීම (Office Visit)</option>
+                            <option value="පාසල හරහා (School Visit)">පාසල හරහා (School Visit)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fu_status">පවුලේ / දරුවන්ගේ වත්මන් තත්වය:</label>
+                        <select id="fu_status" class="form-control">
+                            <option value="සතුටුදායකයි / සාමාන්‍යයි">සතුටුදායකයි / සාමාන්‍යයි</option>
+                            <option value="අධ්‍යාපන ගැටලු ඇත">අධ්‍යාපන ගැටලු ඇත</option>
+                            <option value="රැකවරණ / සෞඛ්‍ය ගැටලු ඇත">රැකවරණ / සෞඛ්‍ය ගැටලු ඇත</option>
+                            <option value="විශේෂ මැදිහත්වීමක් අවශ්‍යයි">විශේෂ මැදිහත්වීමක් අවශ්‍යයි</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fu_nextDate">මීළඟ පසු විපරම් දිනය:</label>
+                        <input type="date" id="fu_nextDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="fu_officer">නිලධාරියාගේ නම (Officer Name):</label>
+                        <input type="text" id="fu_officer" class="form-control" placeholder="නිලධාරියාගේ නම">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="fu_notes">නිරීක්ෂණ සහ ලබා දුන් උපදෙස් / පියවර *:</label>
+                    <textarea id="fu_notes" rows="2" class="form-control" placeholder="පසු විපරම් විස්තර මෙහි සටහන් කරන්න..." required></textarea>
+                </div>
+                <button type="submit" class="btn-warning">පසු විපරම් සටහන සුරකින්න</button>
+            </form>
+
+            <div id="followUpPreview" class="preview-card">
+                <h4 style="margin-bottom:8px;">පසු විපරම් වාර්තා ඉතිහාසය</h4>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>දිනය</th>
+                                <th>ශ්‍රමිකයාගේ නම</th>
+                                <th>Passport / NIC</th>
+                                <th>ක්‍රමය</th>
+                                <th>වත්මන් තත්වය</th>
+                                <th>නිරීක්ෂණ සහ පියවර</th>
+                                <th>මීළඟ දිනය</th>
+                                <th>නිලධාරියා</th>
+                            </tr>
+                        </thead>
+                        <tbody id="followUpTableBody">
+                            <tr><td colspan="8" style="text-align:center;">පසු විපරම් වාර්තා පූරණය වෙමින් පවතී...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 5: 19-Column Master Register (Collapsible) -->
+    <div class="section-box" id="masterRegisterSection">
+        <div class="section-header" onclick="toggleSection('masterBody', 'masterToggleBtn')">
+            <div class="section-title-group">
+                <h3>5. සම්පූර්ණ ශ්‍රමික ලේඛනය (තීරු 19)</h3>
+            </div>
+            <div style="display:flex; gap:8px;" class="no-print" onclick="event.stopPropagation();">
+                <button type="button" class="btn-print" onclick="openSectionForPrint('masterBody', 'masterToggleBtn', 'masterRegisterPreview', 'සම්පූර්ණ ශ්‍රමික ලේඛනය')">Print</button>
+                <button type="button" id="masterToggleBtn" class="btn-toggle" onclick="toggleSection('masterBody', 'masterToggleBtn')">විවෘත කරන්න</button>
+            </div>
+        </div>
+
+        <div id="masterBody" class="section-body hidden">
+            <div id="masterRegisterPreview" class="preview-card">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr id="masterHeadRow"></tr>
+                        </thead>
+                        <tbody id="masterBodyRows"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -651,6 +751,62 @@
         { label: "Nominee Contact No", keys: ["nomineeContactNo", "Nominee Contact No"] }
     ];
 
+    // --- COLLAPSIBLE / SHOW-HIDE HELPERS ---
+    function setSectionOpen(bodyId, btnId, open) {
+        const body = document.getElementById(bodyId);
+        const btn = document.getElementById(btnId);
+        if (!body) return;
+        if (open) {
+            body.classList.remove("hidden");
+            if (btn) btn.innerText = "හකුළන්න";
+        } else {
+            body.classList.add("hidden");
+            if (btn) btn.innerText = "විවෘත කරන්න";
+        }
+    }
+
+    function toggleSection(bodyId, btnId) {
+        const body = document.getElementById(bodyId);
+        if (!body) return;
+        const willOpen = body.classList.contains("hidden");
+        setSectionOpen(bodyId, btnId, willOpen);
+    }
+
+    function openAndJump(sectionId, bodyId) {
+        const mapBtn = {
+            pgBody: "pgToggleBtn",
+            crBody: "crToggleBtn",
+            entryBody: "entryToggleBtn",
+            fuBody: "fuToggleBtn",
+            masterBody: "masterToggleBtn",
+            adminImportBody: "adminImportBtn"
+        };
+        setSectionOpen(bodyId, mapBtn[bodyId], true);
+        const sec = document.getElementById(sectionId);
+        if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function collapseAllSections() {
+        setSectionOpen("pgBody", "pgToggleBtn", false);
+        setSectionOpen("crBody", "crToggleBtn", false);
+        setSectionOpen("entryBody", "entryToggleBtn", false);
+        setSectionOpen("fuBody", "fuToggleBtn", false);
+        setSectionOpen("masterBody", "masterToggleBtn", false);
+        setSectionOpen("adminImportBody", "adminImportBtn", false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function openSectionForPrint(bodyId, btnId, previewId, title) {
+        const mapBtn = {
+            pgBody: "pgToggleBtn",
+            crBody: "crToggleBtn",
+            fuBody: "fuToggleBtn",
+            masterBody: "masterToggleBtn"
+        };
+        setSectionOpen(bodyId, mapBtn[bodyId] || btnId, true);
+        printPreviewSection(previewId, title);
+    }
+
     function onRoleSelectChange() {
         const chosen = document.getElementById("roleSelector").value;
         const pinField = document.getElementById("adminPinField");
@@ -691,6 +847,7 @@
 
         if (role === "ADMIN") {
             adminBox.classList.remove("hidden");
+            setSectionOpen("adminImportBody", "adminImportBtn", true);
             hint.innerText = "Admin: Excel file Import කිරීම, සියලු දත්ත ඇතුළත් කිරීම සහ වාර්තා පාලනය සක්‍රියයි.";
         } else {
             adminBox.classList.add("hidden");
@@ -737,7 +894,6 @@
         return String(val || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
     }
 
-    // --- AUTO-FILL & LOOKUP LOGIC ---
     function findExistingWorker(slbfe, passport, nic) {
         const s = normId(slbfe);
         const p = normId(passport);
@@ -768,12 +924,12 @@
 
         if (match && document.getElementById("editingDocId").value !== match._docId) {
             document.getElementById("editingDocId").value = match._docId;
-            
+
             document.getElementById("f_slbfe").value = getRawVal(match, ["slbfeRegNo", "SLBFE Registration No", "slbfeNo"]);
             document.getElementById("f_passport").value = getRawVal(match, ["passportNo", "Passport No", "passport"]);
             document.getElementById("f_nic").value = getRawVal(match, ["nic", "National Identifi cad No", "National Identity Card No"]);
             document.getElementById("f_name").value = getRawVal(match, ["name", "Name", "fullName"]);
-            
+
             const g = extractGender(match);
             if (g) document.getElementById("f_gender").value = g;
 
@@ -792,18 +948,16 @@
             document.getElementById("f_nomAddr").value = getRawVal(match, ["nomineeAddress", "Nominee Address"]);
             document.getElementById("f_nomContact").value = getRawVal(match, ["nomineeContactNo", "Nominee Contact No"]);
 
-            // Load existing children
             const childContainer = document.getElementById("childrenRowsContainer");
             childContainer.innerHTML = "";
             if (Array.isArray(match.children)) {
                 match.children.forEach(c => addChildEntryRow(c));
             }
 
-            // Show Auto-fill Banner & Update Button
             const banner = document.getElementById("autoFillBanner");
             banner.classList.remove("hidden");
             document.getElementById("autoFillText").innerText = `පවතින වාර්තාවක් හමුවිය (${document.getElementById("f_name").value})! තොරතුරු ස්වයංක්‍රීයව පුරවා ඇත.`;
-            
+
             const submitBtn = document.getElementById("submitWorkerBtn");
             submitBtn.innerText = "පවතින තොරතුරු යාවත්කාලීන කරන්න (Update Record)";
             submitBtn.classList.add("btn-warning");
@@ -817,13 +971,12 @@
         document.getElementById("f_district").value = "MATARA";
         document.getElementById("childrenRowsContainer").innerHTML = "";
         document.getElementById("autoFillBanner").classList.add("hidden");
-        
+
         const submitBtn = document.getElementById("submitWorkerBtn");
         submitBtn.innerText = "නව දත්ත සුරකින්න";
         submitBtn.classList.remove("btn-warning");
     }
 
-    // --- FOLLOW-UP LOOKUP ---
     let selectedWorkerForFollowUp = null;
 
     function lookupWorkerForFollowUp() {
@@ -1221,7 +1374,6 @@
     }
 
     function startRealtimeSync() {
-        // Sync Workers
         db.collection("workers").onSnapshot((snap) => {
             let total = 0;
             let female = 0;
@@ -1231,7 +1383,7 @@
 
             snap.forEach(doc => {
                 const d = doc.data();
-                d._docId = doc.id; // Store Firestore Document ID for updates
+                d._docId = doc.id;
                 records.push(d);
                 total++;
 
@@ -1262,7 +1414,6 @@
             document.getElementById("syncStatus").innerText = "සම්බන්ධතා දෝෂයකි";
         });
 
-        // Sync Follow-Ups
         db.collection("follow_ups").orderBy("createdAt", "desc").onSnapshot((snap) => {
             const fuList = [];
             snap.forEach(doc => {
@@ -1275,7 +1426,6 @@
         });
     }
 
-    // Submit Worker (New OR Update Existing)
     document.getElementById("mainWorkerForm").addEventListener("submit", (e) => {
         e.preventDefault();
 
@@ -1311,7 +1461,6 @@
         };
 
         if (editingId) {
-            // Update Existing Record
             db.collection("workers").doc(editingId).update(payload)
                 .then(() => {
                     alert("පවතින වාර්තාව සාර්ථකව යාවත්කාලීන (Update) කරන ලදී!");
@@ -1322,7 +1471,6 @@
                     alert("යාවත්කාලීන කිරීමේදී දෝෂයක් ඇතිවිය.");
                 });
         } else {
-            // Add New Record (Check duplicate first)
             if (isDuplicateRecord(payload)) {
                 alert("මෙම SLBFE අංකය / ගමන් බලපත්‍ර අංකය / NIC අංකය සහිත වාර්තාවක් දැනටමත් පවතී!");
                 return;
@@ -1340,7 +1488,6 @@
         }
     });
 
-    // Submit Follow-Up Record
     document.getElementById("followUpForm").addEventListener("submit", (e) => {
         e.preventDefault();
 
